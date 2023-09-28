@@ -1,5 +1,13 @@
 package main
 
+import "fmt"
+
+var phrase = "Hello, OTUS!"
+
 func main() {
-	// Place your code here.
+	var reverse []byte
+	for i := len(phrase) - 1; i >= 0; i-- {
+		reverse = append(reverse, phrase[i])
+	}
+	fmt.Println(string(reverse))
 }
