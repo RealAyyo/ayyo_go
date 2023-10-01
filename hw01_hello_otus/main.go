@@ -1,13 +1,12 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"golang.org/x/example/stringutil"
+)
 
 var phrase = "Hello, OTUS!"
 
 func main() {
-	var reverse []byte
-	for i := len(phrase) - 1; i >= 0; i-- {
-		reverse = append(reverse, phrase[i])
-	}
-	fmt.Println(string(reverse))
+	fmt.Println(stringutil.Reverse(phrase))
 }
