@@ -21,7 +21,11 @@ func Unpack(str string) (string, error) {
 	}
 
 	for i, symbol := range runes {
+
 		if unicode.IsDigit(runes[i]) {
+			if i > 1 && unicode.IsDigit(runes[i-1]) {
+				return "", ErrInvalidString
+			}
 			continue
 		}
 
@@ -42,6 +46,7 @@ func Unpack(str string) (string, error) {
 				continue
 			}
 		}
+
 		unpacked.WriteString(string(symbol))
 	}
 
