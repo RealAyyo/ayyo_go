@@ -13,6 +13,10 @@ var (
 )
 
 func Unpack(str string) (string, error) {
+	if len(str) < 1 {
+		return "", nil
+	}
+
 	var unpacked strings.Builder
 	runes := []rune(str)
 
@@ -21,7 +25,6 @@ func Unpack(str string) (string, error) {
 	}
 
 	for i, symbol := range runes {
-
 		if unicode.IsDigit(runes[i]) {
 			if i > 1 && unicode.IsDigit(runes[i-1]) {
 				return "", ErrInvalidString
