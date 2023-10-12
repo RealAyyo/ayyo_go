@@ -3,6 +3,7 @@ package hw02unpackstring
 import (
 	"errors"
 	"strconv"
+	"strings"
 	"unicode"
 )
 
@@ -12,43 +13,37 @@ var (
 )
 
 func Unpack(str string) (string, error) {
-	var unpackedString []byte
+	var unpacked strings.Builder
+	runes := []rune(str)
 
-	for index := 0; index < len(str); index++ {
-		currentCharacter := str[index]
-		currentIsDigit := unicode.IsDigit(rune(currentCharacter))
-
-		if currentIsDigit {
-			return "", ErrInvalidString
-		}
-
-		if index+1 == len(str) {
-			unpackedString = append(unpackedString, currentCharacter)
-			break
-		}
-
-		nextCharacter := str[index+1]
-		nextIsDigit := unicode.IsDigit(rune(nextCharacter))
-
-		if currentIsDigit && nextIsDigit {
-			return "", ErrInvalidString
-		}
-
-		if nextIsDigit {
-			digit, err := strconv.ParseInt(string(nextCharacter), 10, 32)
-			if err != nil {
-				return "", ErrInvalidDigit
-			}
-
-			for count := 0; int64(count) < digit; count++ {
-				unpackedString = append(unpackedString, currentCharacter)
-			}
-
-			index++
-			continue
-		}
-		unpackedString = append(unpackedString, currentCharacter)
+	if unicode.IsDigit(runes[0]) {
+		return "", ErrInvalidString
 	}
 
-	return string(unpackedString), nil
+	for i, symbol := range runes {
+		if unicode.IsDigit(runes[i]) {
+			continue
+		}
+
+		if i+1 < len(runes) {
+			nextSymbol := runes[i+1]
+
+			if unicode.IsDigit(symbol) && unicode.IsDigit(nextSymbol) {
+				return "", ErrInvalidString
+			}
+
+			if unicode.IsDigit(nextSymbol) {
+				digit, err := strconv.ParseInt(string(nextSymbol), 10, 32)
+				if err != nil {
+					return "", ErrInvalidDigit
+				}
+				repeated := strings.Repeat(string(symbol), int(digit))
+				unpacked.WriteString(repeated)
+				continue
+			}
+		}
+		unpacked.WriteString(string(symbol))
+	}
+
+	return unpacked.String(), nil
 }
