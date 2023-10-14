@@ -6,8 +6,9 @@ import (
 	"strings"
 )
 
+var reg = regexp.MustCompile(`[\p{L}0-9-]+(?:['!.,]?[\p{L}0-9-]+)*`)
+
 func Top10(str string) []string {
-	reg := regexp.MustCompile(`[\p{L}0-9-]+(?:['!.,]?[\p{L}0-9-]+)*`)
 	splitString := reg.FindAllString(str, -1)
 	wordFrequency := make(map[string]int)
 
@@ -16,13 +17,7 @@ func Top10(str string) []string {
 		if word == "" || word == "-" {
 			continue
 		}
-
-		if val, ok := wordFrequency[wordLower]; ok {
-			wordFrequency[wordLower] = val + 1
-			continue
-		}
-
-		wordFrequency[wordLower] = 1
+		wordFrequency[wordLower]++
 	}
 
 	wordResult := make([]string, 0, len(wordFrequency))
