@@ -22,9 +22,13 @@ type list struct {
 	len  int
 }
 
-func (l *list) Len() int { return l.len }
+func (l *list) Len() int {
+	return l.len
+}
 
-func (l *list) Front() *ListItem { return l.head }
+func (l *list) Front() *ListItem {
+	return l.head
+}
 
 func (l *list) Back() *ListItem {
 	return l.tail
@@ -34,13 +38,13 @@ func (l *list) PushFront(v interface{}) *ListItem {
 	l.len++
 
 	if l.head == nil {
-		node := &ListItem{Value: v, Next: nil, Prev: nil}
+		node := &ListItem{Value: v}
 
 		l.head = node
 		l.tail = node
 		return node
 	}
-	node := &ListItem{Value: v, Next: l.head, Prev: nil}
+	node := &ListItem{Value: v, Next: l.head}
 
 	l.head.Prev = node
 	l.head = node
