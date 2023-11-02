@@ -69,7 +69,7 @@ func TestRun(t *testing.T) {
 		require.LessOrEqual(t, int64(elapsedTime), int64(sumTime/2), "tasks were run sequentially?")
 	})
 
-	t.Run("", func(t *testing.T) {
+	t.Run("concurrency test", func(t *testing.T) {
 		n, m := 2, 4
 		tasksCount := 10
 		errorsLimitExceeded := false
