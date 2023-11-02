@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/goleak"
 )
@@ -66,5 +67,30 @@ func TestRun(t *testing.T) {
 
 		require.Equal(t, runTasksCount, int32(tasksCount), "not all tasks were completed")
 		require.LessOrEqual(t, int64(elapsedTime), int64(sumTime/2), "tasks were run sequentially?")
+	})
+
+	t.Run("", func(t *testing.T) {
+		n, m := 2, 4
+		tasksCount := 10
+		errorsLimitExceeded := false
+
+		var successCounter int32
+		tasks := make([]Task, tasksCount)
+		for i := 0; i < tasksCount; i++ {
+			tasks[i] = func() error {
+				time.Sleep(10 * time.Millisecond)
+				if atomic.LoadInt32(&successCounter) >= int32(m) {
+					errorsLimitExceeded = true
+					return errors.New("error")
+				}
+				atomic.AddInt32(&successCounter, 1)
+				return nil
+			}
+		}
+
+		err := Run(tasks, n, m)
+		assert.True(t, errorsLimitExceeded)
+		assert.Equal(t, ErrErrorsLimitExceeded, err)
+		assert.LessOrEqual(t, int(successCounter), m)
 	})
 }
