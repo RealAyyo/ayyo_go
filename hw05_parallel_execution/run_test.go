@@ -74,7 +74,7 @@ func TestRun(t *testing.T) {
 	t.Run("concurrency test", func(t *testing.T) {
 		n, m := 2, 4
 		tasksCount := 10
-		errorsLimitExceeded := false
+		var errorsLimitExceeded int32
 
 		var successCounter int32
 		tasks := make([]Task, tasksCount)
@@ -82,7 +82,7 @@ func TestRun(t *testing.T) {
 			tasks[i] = func() error {
 				time.Sleep(10 * time.Millisecond)
 				if atomic.LoadInt32(&successCounter) >= int32(m) {
-					errorsLimitExceeded = true
+					atomic.StoreInt32(&errorsLimitExceeded, 1)
 					return errors.New("error")
 				}
 				atomic.AddInt32(&successCounter, 1)
@@ -91,7 +91,7 @@ func TestRun(t *testing.T) {
 		}
 
 		err := Run(tasks, n, m)
-		assert.True(t, errorsLimitExceeded)
+		assert.Equal(t, int32(1), atomic.LoadInt32(&errorsLimitExceeded))
 		assert.Equal(t, ErrErrorsLimitExceeded, err)
 		assert.LessOrEqual(t, int(successCounter), m)
 	})
