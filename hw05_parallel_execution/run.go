@@ -1,42 +1,43 @@
 package hw05parallelexecution
 
 import (
+	"context"
 	"errors"
 	"sync"
 )
 
 var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
+var ErrPositiveWorkersCount = errors.New("number of workers must be positive")
 
 type Task func() error
 
 // Run starts tasks in n goroutines and stops its work when receiving m errors from tasks.
 func Run(tasks []Task, n, m int) error {
-	if m <= 0 {
-		return ErrErrorsLimitExceeded
+	if n <= 0 {
+		return ErrPositiveWorkersCount
 	}
 
-	var wg sync.WaitGroup
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	tasksChan := make(chan Task)
 	errorsChan := make(chan error, n)
-	doneChan := make(chan struct{})
 
-	go func() {
-		for _, task := range tasks {
-			tasksChan <- task
-		}
-		close(tasksChan)
-	}()
-
-	wg.Add(n)
+	var wg sync.WaitGroup
 	for i := 0; i < n; i++ {
+		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for task := range tasksChan {
+			for {
 				select {
-				case <-doneChan:
+				case <-ctx.Done():
 					return
-				default:
-					if err := task(); err != nil {
+				case task, ok := <-tasksChan:
+					if !ok {
+						return
+					}
+					err := task()
+					if err != nil {
 						errorsChan <- err
 					}
 				}
@@ -44,22 +45,36 @@ func Run(tasks []Task, n, m int) error {
 		}()
 	}
 
+	var wgErrs sync.WaitGroup
+	wgErrs.Add(1)
 	go func() {
-		wg.Wait()
-		close(doneChan)
-		close(errorsChan)
-	}()
-
-	var errorCount int
-	for err := range errorsChan {
-		if err != nil {
-			errorCount++
-
-			if errorCount >= m {
-				return ErrErrorsLimitExceeded
+		defer wgErrs.Done()
+		var errorCount int
+		for err := range errorsChan {
+			if err != nil {
+				errorCount++
+				if m > 0 && errorCount >= m {
+					cancel()
+					return
+				}
 			}
 		}
-	}
+	}()
 
+	for _, task := range tasks {
+		select {
+		case <-ctx.Done():
+			break
+		case tasksChan <- task:
+		}
+	}
+	close(tasksChan)
+	wg.Wait()
+	close(errorsChan)
+	wgErrs.Wait()
+
+	if ctx.Err() != nil && m > 0 {
+		return ErrErrorsLimitExceeded
+	}
 	return nil
 }
