@@ -7,6 +7,7 @@ import (
 )
 
 var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
+
 var ErrPositiveWorkersCount = errors.New("number of workers must be positive")
 
 type Task func() error
@@ -24,43 +25,40 @@ func Run(tasks []Task, n, m int) error {
 	errorsChan := make(chan error, n)
 
 	var wg sync.WaitGroup
-	for i := 0; i < n; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				case task, ok := <-tasksChan:
-					if !ok {
-						return
-					}
-					err := task()
-					if err != nil {
-						errorsChan <- err
-					}
-				}
-			}
-		}()
-	}
+	startWorkers(ctx, &wg, n, tasksChan, errorsChan)
+	processTasks(ctx, tasks, tasksChan)
+	wg.Wait()
+	close(errorsChan)
 
-	var wgErrs sync.WaitGroup
-	wgErrs.Add(1)
-	go func() {
-		defer wgErrs.Done()
-		var errorCount int
-		for err := range errorsChan {
+	return processErrors(errorsChan, m)
+}
+
+func startWorkers(ctx context.Context, wg *sync.WaitGroup, wCount int, tasksChan <-chan Task, errorsChan chan<- error) {
+	for i := 0; i < wCount; i++ {
+		wg.Add(1)
+		go worker(ctx, wg, tasksChan, errorsChan)
+	}
+}
+
+func worker(ctx context.Context, wg *sync.WaitGroup, tasksChan <-chan Task, errorsChan chan<- error) {
+	defer wg.Done()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case task, ok := <-tasksChan:
+			if !ok {
+				return
+			}
+			err := task()
 			if err != nil {
-				errorCount++
-				if m > 0 && errorCount >= m {
-					cancel()
-					return
-				}
+				errorsChan <- err
 			}
 		}
-	}()
+	}
+}
 
+func processTasks(ctx context.Context, tasks []Task, tasksChan chan<- Task) {
 	for _, task := range tasks {
 		select {
 		case <-ctx.Done():
@@ -69,12 +67,17 @@ func Run(tasks []Task, n, m int) error {
 		}
 	}
 	close(tasksChan)
-	wg.Wait()
-	close(errorsChan)
-	wgErrs.Wait()
+}
 
-	if ctx.Err() != nil && m > 0 {
-		return ErrErrorsLimitExceeded
+func processErrors(errorsChan <-chan error, m int) error {
+	var errorCount int
+	for err := range errorsChan {
+		if err != nil {
+			errorCount++
+			if m > 0 && errorCount >= m {
+				return ErrErrorsLimitExceeded
+			}
+		}
 	}
 	return nil
 }
