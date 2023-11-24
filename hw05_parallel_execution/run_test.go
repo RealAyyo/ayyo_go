@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/goleak"
 )
@@ -63,8 +64,35 @@ func TestRun(t *testing.T) {
 		err := Run(tasks, workersCount, maxErrorsCount)
 		elapsedTime := time.Since(start)
 		require.NoError(t, err)
-
+		require.Eventually(t, func() bool {
+			return atomic.LoadInt32(&runTasksCount) == int32(tasksCount)
+		}, time.Second, 10*time.Millisecond, "not all tasks were completed")
 		require.Equal(t, runTasksCount, int32(tasksCount), "not all tasks were completed")
 		require.LessOrEqual(t, int64(elapsedTime), int64(sumTime/2), "tasks were run sequentially?")
+	})
+
+	t.Run("concurrency test", func(t *testing.T) {
+		n, m := 2, 4
+		tasksCount := 10
+		var errorsLimitExceeded int32
+
+		var successCounter int32
+		tasks := make([]Task, tasksCount)
+		for i := 0; i < tasksCount; i++ {
+			tasks[i] = func() error {
+				time.Sleep(10 * time.Millisecond)
+				if atomic.LoadInt32(&successCounter) >= int32(m) {
+					atomic.StoreInt32(&errorsLimitExceeded, 1)
+					return errors.New("error")
+				}
+				atomic.AddInt32(&successCounter, 1)
+				return nil
+			}
+		}
+
+		err := Run(tasks, n, m)
+		assert.Equal(t, int32(1), atomic.LoadInt32(&errorsLimitExceeded))
+		assert.Equal(t, ErrErrorsLimitExceeded, err)
+		assert.LessOrEqual(t, int(successCounter), m)
 	})
 }
