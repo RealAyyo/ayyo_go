@@ -30,10 +30,30 @@ func TestPipeline(t *testing.T) {
 	}
 
 	stages := []Stage{
-		g("Dummy", func(v interface{}) interface{} { return v }),
-		g("Multiplier (* 2)", func(v interface{}) interface{} { return v.(int) * 2 }),
-		g("Adder (+ 100)", func(v interface{}) interface{} { return v.(int) + 100 }),
-		g("Stringifier", func(v interface{}) interface{} { return strconv.Itoa(v.(int)) }),
+		g("Dummy", func(v interface{}) interface{} {
+			return v
+		}),
+		g("Multiplier (* 2)", func(v interface{}) interface{} {
+			return v.(int) * 2
+		}),
+		g("Adder (+ 100)", func(v interface{}) interface{} {
+			return v.(int) + 100
+		}),
+		g("Stringifier", func(v interface{}) interface{} {
+			return strconv.Itoa(v.(int))
+		}),
+	}
+
+	stagesString := []Stage{
+		g("Name", func(v interface{}) interface{} {
+			return v
+		}),
+		g("Hello", func(v interface{}) interface{} {
+			return v.(string) + ", Hello!"
+		}),
+		g("How are you", func(v interface{}) interface{} {
+			return v.(string) + " How are you?"
+		}),
 	}
 
 	t.Run("simple case", func(t *testing.T) {
@@ -90,4 +110,31 @@ func TestPipeline(t *testing.T) {
 		require.Len(t, result, 0)
 		require.Less(t, int64(elapsed), int64(abortDur)+int64(fault))
 	})
+
+	t.Run("String concat", func(t *testing.T) {
+		in := make(Bi)
+		data := []string{"Andrey", "Lena", "Misha", "Alexey"}
+
+		go func() {
+			for _, v := range data {
+				in <- v
+			}
+			close(in)
+		}()
+
+		result := make([]string, 0, 10)
+
+		for s := range ExecutePipeline(in, nil, stagesString...) {
+			result = append(result, s.(string))
+		}
+
+		require.Equal(t, []string{
+			"Andrey, Hello! How are you?",
+			"Lena, Hello! How are you?",
+			"Misha, Hello! How are you?",
+			"Alexey, Hello! How are you?",
+		}, result)
+
+	})
+
 }
