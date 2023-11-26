@@ -134,7 +134,5 @@ func TestPipeline(t *testing.T) {
 			"Misha, Hello! How are you?",
 			"Alexey, Hello! How are you?",
 		}, result)
-
 	})
-
 }
