@@ -62,7 +62,7 @@ func TestReadDir(t *testing.T) {
 		{
 			name:     "No files",
 			files:    map[string]string{},
-			expected: nil,
+			expected: []EnvVar{},
 			wantErr:  false,
 		},
 	}
