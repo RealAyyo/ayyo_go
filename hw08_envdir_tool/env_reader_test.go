@@ -13,7 +13,7 @@ func createTestEnvDir(t *testing.T, files map[string]string) string {
 	dir, err := os.MkdirTemp("", "testenv")
 	require.NoError(t, err)
 	for name, content := range files {
-		if err := os.WriteFile(filepath.Join(dir, name), []byte(content), 0666); err != nil {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(content), 0o666); err != nil {
 			require.NoError(t, err)
 		}
 	}

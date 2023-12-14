@@ -6,7 +6,7 @@ import (
 )
 
 func ExecuteCommand(env []EnvVar, command []string) error {
-	cmd := exec.Command(command[0], command[1:]...)
+	cmd := exec.Command(command[0], command[1:]...) //nolint:gosec
 
 	cmd.Env = os.Environ()
 	for _, e := range env {
