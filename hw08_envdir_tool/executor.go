@@ -1,7 +1,21 @@
 package main
 
-// RunCmd runs a command + arguments (cmd) with environment variables from env.
-func RunCmd(cmd []string, env Environment) (returnCode int) {
-	// Place your code here.
-	return
+import (
+	"os"
+	"os/exec"
+)
+
+func ExecuteCommand(env []EnvVar, command []string) error {
+	cmd := exec.Command(command[0], command[1:]...)
+
+	cmd.Env = os.Environ()
+	for _, e := range env {
+		cmd.Env = append(cmd.Env, e.Name+"="+e.Value)
+	}
+
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	return cmd.Run()
 }

@@ -1,16 +1,36 @@
 package main
 
-type Environment map[string]EnvValue
+import (
+	"os"
+	"strings"
+)
 
-// EnvValue helps to distinguish between empty files and files with the first empty line.
-type EnvValue struct {
-	Value      string
-	NeedRemove bool
+type EnvVar struct {
+	Name  string
+	Value string
 }
 
-// ReadDir reads a specified directory and returns map of env variables.
-// Variables represented as files where filename is name of variable, file first line is a value.
-func ReadDir(dir string) (Environment, error) {
-	// Place your code here
-	return nil, nil
+func ReadEnv(dir string) ([]EnvVar, error) {
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	env := make([]EnvVar, 0, len(files))
+	for _, file := range files {
+		content, err := os.ReadFile(dir + "/" + file.Name())
+		if err != nil {
+			return nil, err
+		}
+
+		value := strings.ReplaceAll(string(content), "\x00", "\n")
+		value = strings.TrimRight(value, "\n")
+
+		env = append(env, EnvVar{
+			Name:  file.Name(),
+			Value: value,
+		})
+	}
+
+	return env, nil
 }
