@@ -8,77 +8,85 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func createTestEnvDir(t *testing.T, files map[string]string) string {
-	t.Helper()
-	dir, err := os.MkdirTemp("", "testenv")
-	require.NoError(t, err)
-	for name, content := range files {
-		if err := os.WriteFile(filepath.Join(dir, name), []byte(content), 0o666); err != nil {
-			require.NoError(t, err)
-		}
-	}
-	return dir
-}
+func TestReadEnv(t *testing.T) {
+	t.Run("reads environment variables from files", func(t *testing.T) {
+		dir, err := os.MkdirTemp("", "envdir")
+		require.NoError(t, err)
+		defer os.RemoveAll(dir)
 
-func TestReadDir(t *testing.T) {
-	tests := []struct {
-		name     string
-		files    map[string]string
-		expected []EnvVar
-		wantErr  bool
-	}{
-		{
-			name: "Normal variables",
-			files: map[string]string{
-				"VAR1": "value1",
-				"VAR2": "value2",
-			},
-			expected: []EnvVar{
-				{Name: "VAR1", Value: "value1"},
-				{Name: "VAR2", Value: "value2"},
-			},
-			wantErr: false,
-		},
-		{
-			name: "Empty variable",
-			files: map[string]string{
-				"EMPTY_VAR": "",
-			},
-			expected: []EnvVar{
-				{Name: "EMPTY_VAR", Value: ""},
-			},
-			wantErr: false,
-		},
-		{
-			name: "Variable with newlines",
-			files: map[string]string{
-				"NEWLINE_VAR": "line1\x00line2",
-			},
-			expected: []EnvVar{
-				{Name: "NEWLINE_VAR", Value: "line1\nline2"},
-			},
-			wantErr: false,
-		},
-		{
-			name:     "No files",
-			files:    map[string]string{},
-			expected: []EnvVar{},
-			wantErr:  false,
-		},
-	}
+		err = os.WriteFile(filepath.Join(dir, "VAR1"), []byte("value1\n"), 0o600)
+		require.NoError(t, err)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			dir := createTestEnvDir(t, tt.files)
-			defer os.RemoveAll(dir) // чистим за собой
+		err = os.WriteFile(filepath.Join(dir, "VAR2"), []byte("value2\n"), 0o600)
+		require.NoError(t, err)
 
-			env, err := ReadEnv(dir)
-			if tt.wantErr {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				require.Equal(t, tt.expected, env)
-			}
-		})
-	}
+		envVars, err := ReadEnv(dir)
+		require.NoError(t, err)
+
+		require.Len(t, envVars, 2)
+		require.Contains(t, envVars, EnvVar{Name: "VAR1", Value: "value1"})
+		require.Contains(t, envVars, EnvVar{Name: "VAR2", Value: "value2"})
+	})
+
+	t.Run("ignores directories and files with =", func(t *testing.T) {
+		dir, err := os.MkdirTemp("", "envdir")
+		require.NoError(t, err)
+		defer os.RemoveAll(dir)
+
+		err = os.Mkdir(filepath.Join(dir, "DIR"), 0o755)
+		require.NoError(t, err)
+
+		err = os.WriteFile(filepath.Join(dir, "VAR=3"), []byte("value3\n"), 0o600)
+		require.NoError(t, err)
+
+		envVars, err := ReadEnv(dir)
+		require.NoError(t, err)
+
+		require.Empty(t, envVars)
+	})
+
+	t.Run("trims spaces and tabs from the end of values", func(t *testing.T) {
+		dir, err := os.MkdirTemp("", "envdir")
+		require.NoError(t, err)
+		defer os.RemoveAll(dir)
+
+		err = os.WriteFile(filepath.Join(dir, "VAR4"), []byte("value4 \t\n"), 0o600)
+		require.NoError(t, err)
+
+		envVars, err := ReadEnv(dir)
+		require.NoError(t, err)
+
+		require.Len(t, envVars, 1)
+		require.Contains(t, envVars, EnvVar{Name: "VAR4", Value: "value4"})
+	})
+
+	t.Run("replaces null bytes with newlines", func(t *testing.T) {
+		dir, err := os.MkdirTemp("", "envdir")
+		require.NoError(t, err)
+		defer os.RemoveAll(dir)
+
+		err = os.WriteFile(filepath.Join(dir, "VAR5"), []byte("line1\x00line2\n"), 0o600)
+		require.NoError(t, err)
+
+		envVars, err := ReadEnv(dir)
+		require.NoError(t, err)
+
+		require.Len(t, envVars, 1)
+		require.Contains(t, envVars, EnvVar{Name: "VAR5", Value: "line1\nline2"})
+	})
+
+	t.Run("sets MustBeRemoved for empty files", func(t *testing.T) {
+		dir, err := os.MkdirTemp("", "envdir")
+		require.NoError(t, err)
+		defer os.RemoveAll(dir)
+
+		err = os.WriteFile(filepath.Join(dir, "VAR6"), []byte("\n"), 0o600)
+		require.NoError(t, err)
+
+		envVars, err := ReadEnv(dir)
+		require.NoError(t, err)
+
+		require.Len(t, envVars, 1)
+		require.Contains(t, envVars, EnvVar{Name: "VAR6", Value: "", MustBeRemoved: true})
+	})
 }

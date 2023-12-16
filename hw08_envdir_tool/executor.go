@@ -6,13 +6,26 @@ import (
 )
 
 func ExecuteCommand(env []EnvVar, command []string) error {
-	cmd := exec.Command(command[0], command[1:]...) //nolint:gosec
+	for _, envVar := range env {
+		_, ok := os.LookupEnv(envVar.Name)
+		if ok {
+			err := os.Unsetenv(envVar.Name)
+			if err != nil {
+				return err
+			}
+		}
 
-	cmd.Env = os.Environ()
-	for _, e := range env {
-		cmd.Env = append(cmd.Env, e.Name+"="+e.Value)
+		if envVar.MustBeRemoved {
+			continue
+		}
+
+		err := os.Setenv(envVar.Name, envVar.Value)
+		if err != nil {
+			return err
+		}
 	}
 
+	cmd := exec.Command(command[0], command[1:]...) //nolint: gosec
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

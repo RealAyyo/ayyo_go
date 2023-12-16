@@ -2,12 +2,14 @@ package main
 
 import (
 	"os"
+	"path"
 	"strings"
 )
 
 type EnvVar struct {
-	Name  string
-	Value string
+	Name          string
+	Value         string
+	MustBeRemoved bool
 }
 
 func ReadEnv(dir string) ([]EnvVar, error) {
@@ -16,21 +18,29 @@ func ReadEnv(dir string) ([]EnvVar, error) {
 		return nil, err
 	}
 
-	env := make([]EnvVar, 0, len(files))
+	envVars := make([]EnvVar, 0, len(files))
 	for _, file := range files {
-		content, err := os.ReadFile(dir + "/" + file.Name())
+		if file.IsDir() || strings.Contains(file.Name(), "=") {
+			continue
+		}
+
+		content, err := os.ReadFile(path.Join(dir, file.Name()))
 		if err != nil {
 			return nil, err
 		}
 
-		value := strings.ReplaceAll(string(content), "\x00", "\n")
+		lines := strings.Split(string(content), "\n")
+		value := lines[0]
 		value = strings.TrimRight(value, "\n")
+		value = strings.ReplaceAll(value, string([]byte{0x00}), "\n")
+		value = strings.TrimRight(value, " \t")
 
-		env = append(env, EnvVar{
-			Name:  file.Name(),
-			Value: value,
+		envVars = append(envVars, EnvVar{
+			Name:          file.Name(),
+			Value:         value,
+			MustBeRemoved: len(value) == 0,
 		})
 	}
 
-	return env, nil
+	return envVars, nil
 }
