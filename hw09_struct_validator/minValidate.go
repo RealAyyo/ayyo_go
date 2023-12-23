@@ -6,6 +6,7 @@ import (
 	"strconv"
 )
 
+//nolint:exhaustive
 func minValidate(requireMax string, v reflect.Value) error {
 	requireMaxVal, err := strconv.Atoi(requireMax)
 	if err != nil {

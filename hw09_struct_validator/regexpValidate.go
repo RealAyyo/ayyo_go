@@ -5,7 +5,7 @@ import (
 	"regexp"
 )
 
-// ErrInvalidRegexp
+//nolint:exhaustive
 func regexValidate(regexpValue string, v reflect.Value) error {
 	re := regexp.MustCompile(regexpValue)
 
@@ -18,6 +18,5 @@ func regexValidate(regexpValue string, v reflect.Value) error {
 	default:
 		return ErrInvalidType
 	}
-
 	return nil
 }

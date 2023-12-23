@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+//nolint:exhaustive
 func inValidate(inValues string, v reflect.Value) error {
 	switch v.Kind() {
 	case reflect.String:
@@ -31,11 +32,9 @@ func inValidate(inValues string, v reflect.Value) error {
 				has = true
 			}
 		}
-
 		if !has {
 			return ErrInvalidIn
 		}
-	default:
 		return ErrInvalidType
 	}
 

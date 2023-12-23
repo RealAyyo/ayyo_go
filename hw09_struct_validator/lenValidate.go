@@ -6,6 +6,7 @@ import (
 	"strconv"
 )
 
+//nolint:exhaustive
 func lenValidate(requireLen string, v reflect.Value) error {
 	maxLen, err := strconv.Atoi(requireLen)
 	if err != nil {

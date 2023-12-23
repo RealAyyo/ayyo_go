@@ -56,7 +56,7 @@ func TestValidate(t *testing.T) {
 			in: User{
 				ID:     "123456789012345678901234567890123456",
 				Name:   "Dmitriy Morozov",
-				Age:    50,
+				Age:    120,
 				Email:  "infootus.com",
 				Role:   "admin",
 				Phones: []string{"89224818241"},
@@ -66,21 +66,9 @@ func TestValidate(t *testing.T) {
 					Field: "Email",
 					Err:   ErrInvalidRegexp,
 				},
-			},
-		},
-		{
-			in: User{
-				ID:     "123456789012345678901234567890123456",
-				Name:   "Dmitriy Morozov",
-				Age:    50,
-				Email:  "info@otus.com",
-				Role:   "manager",
-				Phones: []string{"89224818241"},
-			},
-			expectedErr: ValidationErrors{
 				ValidationError{
-					Field: "Role",
-					Err:   ErrInvalidIn,
+					Field: "Age",
+					Err:   ErrInvalidMax,
 				},
 			},
 		},
@@ -90,29 +78,17 @@ func TestValidate(t *testing.T) {
 				Name:   "Dmitriy Morozov",
 				Age:    1,
 				Email:  "info@otus.com",
-				Role:   "admin",
+				Role:   "admEn",
 				Phones: []string{"89224818241"},
 			},
 			expectedErr: ValidationErrors{
+				ValidationError{
+					Field: "Role",
+					Err:   ErrInvalidIn,
+				},
 				ValidationError{
 					Field: "Age",
 					Err:   ErrInvalidMin,
-				},
-			},
-		},
-		{
-			in: User{
-				ID:     "123456789012345678901234567890123456",
-				Name:   "Dmitriy Morozov",
-				Age:    120,
-				Email:  "info@otus.com",
-				Role:   "admin",
-				Phones: []string{"89224818241"},
-			},
-			expectedErr: ValidationErrors{
-				ValidationError{
-					Field: "Age",
-					Err:   ErrInvalidMax,
 				},
 			},
 		},
