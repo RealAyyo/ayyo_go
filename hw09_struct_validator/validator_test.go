@@ -63,12 +63,12 @@ func TestValidate(t *testing.T) {
 			},
 			expectedErr: ValidationErrors{
 				ValidationError{
-					Field: "Email",
-					Err:   ErrInvalidRegexp,
-				},
-				ValidationError{
 					Field: "Age",
 					Err:   ErrInvalidMax,
+				},
+				ValidationError{
+					Field: "Email",
+					Err:   ErrInvalidRegexp,
 				},
 			},
 		},
@@ -83,12 +83,12 @@ func TestValidate(t *testing.T) {
 			},
 			expectedErr: ValidationErrors{
 				ValidationError{
-					Field: "Role",
-					Err:   ErrInvalidIn,
-				},
-				ValidationError{
 					Field: "Age",
 					Err:   ErrInvalidMin,
+				},
+				ValidationError{
+					Field: "Role",
+					Err:   ErrInvalidIn,
 				},
 			},
 		},

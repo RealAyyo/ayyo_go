@@ -28,6 +28,10 @@ func inValidate(inValues string, v reflect.Value) error {
 			if err != nil {
 				return err
 			}
+			fmt.Println("-------")
+			fmt.Println(v.Int(), "v.Int()")
+			fmt.Println(int64(valInt), "int64(valInt)")
+			fmt.Println("-------")
 			if v.Int() == int64(valInt) {
 				has = true
 			}
@@ -35,11 +39,9 @@ func inValidate(inValues string, v reflect.Value) error {
 		if !has {
 			return ErrInvalidIn
 		}
+	default:
 		return ErrInvalidType
 	}
 
-	for _, val := range strings.Split(inValues, ",") {
-		fmt.Println(val)
-	}
 	return nil
 }
