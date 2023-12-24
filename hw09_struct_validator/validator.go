@@ -77,6 +77,10 @@ func validateField(v reflect.Value, tag string) []error {
 	var errs []error
 
 	for _, ruleField := range validateRules {
+		if len(ruleField) < 2 {
+			continue
+		}
+
 		args := strings.Split(ruleField, ":")[1:][0]
 		rule := strings.Split(ruleField, ":")[0]
 
