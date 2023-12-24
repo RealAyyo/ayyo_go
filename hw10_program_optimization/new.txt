@@ -1,0 +1,6 @@
+goos: darwin
+goarch: arm64
+pkg: github.com/realayyo/hw10_program_optimization
+BenchmarkGetDomainStat-8   	     559	   2029710 ns/op
+PASS
+ok  	github.com/realayyo/hw10_program_optimization	2.465s
