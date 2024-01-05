@@ -30,7 +30,6 @@ func main() {
 
 	client := NewTelnetClient(address, timeout, os.Stdin, os.Stdout)
 	err := client.Connect()
-
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error connecting: %v", err)
 		os.Exit(1)
