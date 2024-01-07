@@ -9,26 +9,20 @@ import (
 	"time"
 
 	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/app"
+	config2 "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/config"
 	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/logger"
 	internalhttp "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/server/http"
 	memorystorage "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/storage/memory"
 )
 
-var configFile string
-
-func init() {
-	flag.StringVar(&configFile, "config", "/etc/calendar/config.toml", "Path to configuration file")
-}
-
 func main() {
-	flag.Parse()
-
 	if flag.Arg(0) == "version" {
 		printVersion()
 		return
 	}
 
-	config := NewConfig()
+	config := config2.NewConfig()
+
 	logg := logger.New(config.Logger.Level)
 
 	storage := memorystorage.New()
