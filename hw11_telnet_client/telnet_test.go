@@ -62,4 +62,30 @@ func TestTelnetClient(t *testing.T) {
 
 		wg.Wait()
 	})
+
+	t.Run("invalid host", func(t *testing.T) {
+		in := &bytes.Buffer{}
+		out := &bytes.Buffer{}
+
+		timeout, err := time.ParseDuration("10s")
+		require.NoError(t, err)
+
+		client := NewTelnetClient("invalid-host", timeout, io.NopCloser(in), out)
+		err = client.Connect()
+		require.Error(t, err)
+	})
+
+	t.Run("server not responding", func(t *testing.T) {
+		// Set up a client with a valid address, but no server listening
+		in := &bytes.Buffer{}
+		out := &bytes.Buffer{}
+
+		timeout, err := time.ParseDuration("10s")
+		require.NoError(t, err)
+
+		client := NewTelnetClient("127.0.0.1:9999", timeout, io.NopCloser(in), out)
+		err = client.Connect()
+		require.Error(t, err)
+		// You might check for specific error messages or types here
+	})
 }
