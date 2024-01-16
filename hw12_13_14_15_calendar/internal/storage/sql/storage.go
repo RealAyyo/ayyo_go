@@ -122,7 +122,7 @@ func (s *Storage) UpdateEvent(ctx context.Context, updated *storage.Event) error
 	return nil
 }
 
-func (s *Storage) DeleteEvent(ctx context.Context, id int, userId string) error {
+func (s *Storage) DeleteEvent(ctx context.Context, id int, userId int) error {
 	_, err := s.db.Exec(
 		ctx,
 		"DELETE FROM events WHERE id = $1 AND user_id = $2",

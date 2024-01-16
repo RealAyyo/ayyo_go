@@ -3,6 +3,7 @@ package memorystorage
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -119,4 +120,29 @@ func TestStorage(t *testing.T) {
 		require.Equal(t, len(listEvents), 0)
 	})
 
+	t.Run("Concurrent Adding", func(t *testing.T) {
+		var wg sync.WaitGroup
+		numberOfGoroutines := 35
+
+		for i := 1; i < numberOfGoroutines+1; i++ {
+			wg.Add(1)
+			go func(i int) {
+				defer wg.Done()
+				event := &storage2.Event{
+					UserId:   2,
+					Title:    fmt.Sprintf("Event %d", i),
+					Duration: "1:00:00",
+					Date:     time.Now(),
+				}
+				err := storage.AddEvent(ctx, event)
+				require.NoError(t, err)
+			}(i)
+		}
+
+		wg.Wait()
+
+		listEvents, err := storage.ListEvents(ctx, 2, time.Now().Add(-time.Hour), time.Now().Add(time.Hour))
+		require.NoError(t, err)
+		require.Equal(t, numberOfGoroutines, len(listEvents))
+	})
 }

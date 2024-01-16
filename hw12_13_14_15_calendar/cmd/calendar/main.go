@@ -13,7 +13,6 @@ import (
 	config2 "github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/config"
 	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/logger"
 	internalhttp "github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/server/http"
-	storage2 "github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/storage"
 	memorystorage "github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/storage/memory"
 	sqlstorage "github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/storage/sql"
 )
@@ -39,19 +38,9 @@ func main() {
 		storage, err = sqlstorage.New(ctx, config.Db)
 	}
 
-	err = storage.AddEvent(ctx, &storage2.Event{
-		ID:       1,
-		UserId:   2,
-		Title:    "hello",
-		Date:     time.Now(),
-		Duration: "5h10m0s",
-	})
-
 	if err != nil {
 		panic(err)
 	}
-
-	storage.ListEvents(ctx, 2, time.Now(), time.Now().Add(time.Hour*10))
 
 	defer func() {
 		if closer, ok := storage.(sqlstorage.Closer); ok {
