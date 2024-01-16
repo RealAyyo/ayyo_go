@@ -3,16 +3,19 @@ package main
 import (
 	"context"
 	"flag"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/app"
-	config2 "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/config"
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/logger"
-	internalhttp "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/server/http"
-	memorystorage "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/storage/memory"
+	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/app"
+	config2 "github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/config"
+	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/logger"
+	internalhttp "github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/server/http"
+	storage2 "github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/storage"
+	memorystorage "github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/storage/memory"
+	sqlstorage "github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/storage/sql"
 )
 
 func main() {
@@ -25,7 +28,40 @@ func main() {
 
 	logg := logger.New(config.Logger.Level)
 
-	storage := memorystorage.New()
+	var storage app.Storage
+	var err error
+	ctx := context.Background()
+
+	switch config.Storage.Type {
+	case "MEMORY":
+		storage, err = memorystorage.New()
+	case "SQL":
+		storage, err = sqlstorage.New(ctx, config.Db)
+	}
+
+	err = storage.AddEvent(ctx, &storage2.Event{
+		ID:       1,
+		UserId:   2,
+		Title:    "hello",
+		Date:     time.Now(),
+		Duration: "5h10m0s",
+	})
+
+	if err != nil {
+		panic(err)
+	}
+
+	storage.ListEvents(ctx, 2, time.Now(), time.Now().Add(time.Hour*10))
+
+	defer func() {
+		if closer, ok := storage.(sqlstorage.Closer); ok {
+			err := closer.Close(ctx)
+			if err != nil {
+				log.Printf("Error closing storage: %v", err)
+			}
+		}
+	}()
+
 	calendar := app.New(logg, storage)
 
 	server := internalhttp.NewServer(logg, calendar)

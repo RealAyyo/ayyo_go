@@ -32,3 +32,7 @@ lint: install-lint-deps
 	golangci-lint run ./...
 
 .PHONY: build run build-img run-img version test lint
+
+
+
+#GOOSE_DRIVER=postgres GOOSE_DBSTRING="postgres://postgres:159753@localhost:5432/calendar" goose up

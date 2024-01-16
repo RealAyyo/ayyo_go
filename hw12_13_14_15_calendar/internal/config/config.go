@@ -11,8 +11,22 @@ import (
 // Организация конфига в main принуждает нас сужать API компонентов, использовать
 // при их конструировании только необходимые параметры, а также уменьшает вероятность циклической зависимости.
 type Config struct {
-	Logger LoggerConf `yaml:"logger"`
-	Env    string     `yaml:"env"  env-default:"local"`
+	Logger  LoggerConf `yaml:"logger"`
+	Storage Storage    `yaml:"storage"`
+	Db      DbConf     `yaml:"db"`
+	Env     string     `yaml:"env"  env-default:"local"`
+}
+
+type DbConf struct {
+	Host     string `yaml:"host" env-default:"localhost"`
+	Port     string `yaml:"port" env-default:"5432"`
+	Database string `yaml:"database" env-required:"true"`
+	Username string `yaml:"username" env-required:"true"`
+	Password string `yaml:"password" env-required:"true"`
+}
+
+type Storage struct {
+	Type string `yaml:"type" env-default:"MEMORY"`
 }
 
 type LoggerConf struct {
@@ -49,5 +63,3 @@ func fetchConfigPath() string {
 
 	return res
 }
-
-// TODO
