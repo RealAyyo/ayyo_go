@@ -134,7 +134,8 @@ func (s *Storage) DeleteEvent(ctx context.Context, id int, userID int) error {
 }
 
 func (s *Storage) ListEvents(
-	ctx context.Context, userID int, dateFrom time.Time, dateTo time.Time) ([]storage.Event, error) {
+	ctx context.Context, userID int, dateFrom time.Time, dateTo time.Time,
+) ([]storage.Event, error) {
 	var events []storage.Event
 
 	rows, err := s.db.Query(

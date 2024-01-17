@@ -56,7 +56,8 @@ func (a *App) CreateEvent(ctx context.Context, event *storage2.Event) error {
 }
 
 func (a *App) GetEventsForRange(
-	ctx context.Context, userID int, dateFrom time.Time, dateRange int) ([]storage2.Event, error) {
+	ctx context.Context, userID int, dateFrom time.Time, dateRange int,
+) ([]storage2.Event, error) {
 	var dateTo time.Time
 	switch dateRange {
 	case DAY:

@@ -99,7 +99,8 @@ func (s *Storage) DeleteEvent(_ context.Context, id int, userID int) error {
 }
 
 func (s *Storage) ListEvents(
-	_ context.Context, userID int, dateFrom time.Time, dateTo time.Time) ([]storage.Event, error) {
+	_ context.Context, userID int, dateFrom time.Time, dateTo time.Time,
+) ([]storage.Event, error) {
 	var results []storage.Event
 
 	for id, event := range s.events[userID] {
