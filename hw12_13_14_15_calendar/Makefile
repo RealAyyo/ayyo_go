@@ -1,7 +1,4 @@
 include .env
-export GOROOT=/usr/local/go
-
-PROJECTNAME=$(shell basename "$(PWD)")
 
 BIN := "./bin/calendar"
 DOCKER_IMG="calendar:develop"
@@ -28,7 +25,7 @@ version: build
 	$(BIN) version
 
 test:
-	go test -race ./internal/storage/memory
+	go test -race -count=1 ./internal/...
 
 install-lint-deps:
 	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.55.2
@@ -39,6 +36,4 @@ lint: install-lint-deps
 migrate:
 	goose -dir ./migrations postgres "postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable" up
 
-
 .PHONY: build run build-img run-img version test lint migrate
-
