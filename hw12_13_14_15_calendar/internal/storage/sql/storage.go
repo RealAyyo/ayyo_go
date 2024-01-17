@@ -72,7 +72,6 @@ func (s *Storage) AddEvent(ctx context.Context, event *storage.Event) error {
 		ctx,
 		"INSERT INTO events (title, date, duration, user_id) VALUES ($1, $2, $3, $4)",
 		event.Title, event.Date, event.Duration, event.UserId)
-
 	if err != nil {
 		return err
 	}
@@ -122,13 +121,12 @@ func (s *Storage) UpdateEvent(ctx context.Context, updated *storage.Event) error
 	return nil
 }
 
-func (s *Storage) DeleteEvent(ctx context.Context, id int, userId int) error {
+func (s *Storage) DeleteEvent(ctx context.Context, id int, userID int) error {
 	_, err := s.db.Exec(
 		ctx,
 		"DELETE FROM events WHERE id = $1 AND user_id = $2",
-		id, userId,
+		id, userID,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -145,7 +143,6 @@ func (s *Storage) ListEvents(ctx context.Context, userId int, dateFrom time.Time
 		dateFrom,
 		dateTo,
 	)
-
 	if err != nil {
 		return nil, err
 	}

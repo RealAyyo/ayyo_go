@@ -1,6 +1,6 @@
 module github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar
 
-go 1.21
+go 1.21.1
 
 require (
 	github.com/ilyakaznacheev/cleanenv v1.5.0

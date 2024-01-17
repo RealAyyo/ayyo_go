@@ -10,16 +10,14 @@ import (
 	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/storage"
 )
 
-var (
-	ErrEventNotFound = errors.New("event for update not found")
-)
+var ErrEventNotFound = errors.New("event for update not found")
 
 type EventsMap map[int]map[int]*storage.Event
 
 type Storage struct {
 	count  int
 	events EventsMap
-	mu     sync.RWMutex //nolint:unused
+	mu     sync.RWMutex
 }
 
 func (s *Storage) AddEvent(ctx context.Context, event *storage.Event) error {
@@ -87,15 +85,15 @@ func (s *Storage) UpdateEvent(ctx context.Context, updated *storage.Event) error
 	return nil
 }
 
-func (s *Storage) DeleteEvent(ctx context.Context, id int, userId int) error {
+func (s *Storage) DeleteEvent(ctx context.Context, id int, userID int) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if _, ok := s.events[userId][id]; !ok {
+	if _, ok := s.events[userID][id]; !ok {
 		return ErrEventNotFound
 	}
 
-	delete(s.events[userId], id)
+	delete(s.events[userID], id)
 
 	return nil
 }

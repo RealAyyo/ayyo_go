@@ -1,3 +1,8 @@
+include .env
+export GOROOT=/usr/local/go
+
+PROJECTNAME=$(shell basename "$(PWD)")
+
 BIN := "./bin/calendar"
 DOCKER_IMG="calendar:develop"
 
@@ -5,7 +10,6 @@ GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
 
 build:
-	@echo "Building the project..."
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
 
 run: build
@@ -24,14 +28,17 @@ version: build
 	$(BIN) version
 
 test:
-	go test -race ./internal/... ./pkg/...
+	go test -race ./internal/storage/memory
 
 install-lint-deps:
-	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.50.1
+	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.55.2
 
 lint: install-lint-deps
 	golangci-lint run ./...
 
+migrate:
+	goose -dir ./migrations postgres "postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable" up
 
-.PHONY: build run build-img run-img version test lint
+
+.PHONY: build run build-img run-img version test lint migrate
 

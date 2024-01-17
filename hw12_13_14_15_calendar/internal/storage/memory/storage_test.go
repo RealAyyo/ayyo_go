@@ -18,56 +18,54 @@ type TestCases struct {
 	errRequired error
 }
 
-var (
-	testCases = []TestCases{
-		{
-			name: "First Event",
-			event: &storage2.Event{
-				UserId:   2,
-				Title:    "Meet",
-				Duration: "1:00:00",
-				Date:     time.Now(),
-			},
-			errRequired: nil,
+var testCases = []TestCases{
+	{
+		name: "First Event",
+		event: &storage2.Event{
+			UserId:   2,
+			Title:    "Meet",
+			Duration: "1:00:00",
+			Date:     time.Now(),
 		},
-		{
-			name: "Second Event",
-			event: &storage2.Event{
-				Title:    "Daily",
-				Duration: "0:30:00",
-				Date:     time.Now(),
-			},
-			errRequired: app.ErrUserIdRequired,
+		errRequired: nil,
+	},
+	{
+		name: "Second Event",
+		event: &storage2.Event{
+			Title:    "Daily",
+			Duration: "0:30:00",
+			Date:     time.Now(),
 		},
-		{
-			name: "Third Event",
-			event: &storage2.Event{
-				UserId:   2,
-				Duration: "2:00:00",
-				Date:     time.Now(),
-			},
-			errRequired: app.ErrTitleRequired,
+		errRequired: app.ErrUserIdRequired,
+	},
+	{
+		name: "Third Event",
+		event: &storage2.Event{
+			UserId:   2,
+			Duration: "2:00:00",
+			Date:     time.Now(),
 		},
-		{
-			name: "Fourth Event",
-			event: &storage2.Event{
-				UserId: 3,
-				Title:  "Daily",
-				Date:   time.Now(),
-			},
-			errRequired: app.ErrDurationRequired,
+		errRequired: app.ErrTitleRequired,
+	},
+	{
+		name: "Fourth Event",
+		event: &storage2.Event{
+			UserId: 3,
+			Title:  "Daily",
+			Date:   time.Now(),
 		},
-		{
-			name: "Fourth Event",
-			event: &storage2.Event{
-				UserId:   3,
-				Title:    "Daily",
-				Duration: "2:00:00",
-			},
-			errRequired: app.ErrDateRequired,
+		errRequired: app.ErrDurationRequired,
+	},
+	{
+		name: "Fourth Event",
+		event: &storage2.Event{
+			UserId:   3,
+			Title:    "Daily",
+			Duration: "2:00:00",
 		},
-	}
-)
+		errRequired: app.ErrDateRequired,
+	},
+}
 
 func TestStorage(t *testing.T) {
 	ctx := context.Background()

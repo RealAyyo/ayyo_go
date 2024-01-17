@@ -40,7 +40,7 @@ type Logger interface {
 type Storage interface {
 	AddEvent(ctx context.Context, event *storage2.Event) error
 	UpdateEvent(ctx context.Context, updated *storage2.Event) error
-	DeleteEvent(ctx context.Context, id int, userId int) error
+	DeleteEvent(ctx context.Context, id int, userID int) error
 	ListEvents(ctx context.Context, userId int, dateFrom time.Time, dateTo time.Time) ([]storage2.Event, error)
 }
 

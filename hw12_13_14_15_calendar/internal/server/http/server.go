@@ -55,6 +55,7 @@ func (s *Server) Stop(ctx context.Context) error {
 	err := s.httpServer.Shutdown(ctx)
 	return err
 }
+
 func helloHandler(w http.ResponseWriter, r *http.Request) {
 	ip := ReadUserIP(r)
 	fmt.Println(fmt.Sprintf(
