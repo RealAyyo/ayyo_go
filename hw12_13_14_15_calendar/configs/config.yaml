@@ -9,3 +9,6 @@ db:
   database: "calendar"
   username: "postgres"
   password: "159753"
+http:
+  host: "0.0.0.0"
+  port: "8888"

@@ -35,7 +35,7 @@ func New(level string) Logger {
 
 func (l Logger) Info(msg string, attrs ...any) {
 	if len(attrs) > 0 {
-		l.logger.Info(msg, attrs)
+		l.logger.Info(msg, attrs...)
 	} else {
 		l.logger.Info(msg)
 	}
@@ -43,7 +43,7 @@ func (l Logger) Info(msg string, attrs ...any) {
 
 func (l Logger) Error(msg string, attrs ...any) {
 	if len(attrs) > 0 {
-		l.logger.Error(msg, attrs)
+		l.logger.Error(msg, attrs...)
 	} else {
 		l.logger.Error(msg)
 	}
@@ -59,7 +59,7 @@ func (l Logger) Debug(msg string, attrs ...any) {
 
 func (l Logger) Warn(msg string, attrs ...any) {
 	if len(attrs) > 0 {
-		l.logger.Warn(msg, attrs)
+		l.logger.Warn(msg, attrs...)
 	} else {
 		l.logger.Warn(msg)
 	}
