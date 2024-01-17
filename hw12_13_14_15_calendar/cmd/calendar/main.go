@@ -35,7 +35,7 @@ func main() {
 	case "MEMORY":
 		storage, err = memorystorage.New()
 	case "SQL":
-		storage, err = sqlstorage.New(ctx, config.Db)
+		storage, err = sqlstorage.New(ctx, config.DB)
 	}
 
 	if err != nil {
@@ -53,7 +53,7 @@ func main() {
 
 	calendar := app.New(logg, storage)
 
-	server := internalhttp.NewServer(logg, calendar, config.Http)
+	server := internalhttp.NewServer(logg, calendar, config.HTTP)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)

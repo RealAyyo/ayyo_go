@@ -3,8 +3,8 @@ package storage
 import "time"
 
 type Notification struct {
-	EventId string
+	EventID string
 	Title   string
 	Date    time.Time
-	UserId  string
+	UserID  string
 }

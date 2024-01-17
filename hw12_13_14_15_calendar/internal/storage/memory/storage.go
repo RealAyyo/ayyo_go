@@ -20,12 +20,12 @@ type Storage struct {
 	mu     sync.RWMutex
 }
 
-func (s *Storage) AddEvent(ctx context.Context, event *storage.Event) error {
+func (s *Storage) AddEvent(_ context.Context, event *storage.Event) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if event.UserId == 0 {
-		return app.ErrUserIdRequired
+	if event.UserID == 0 {
+		return app.ErrUserIDRequired
 	}
 
 	if event.Title == "" {
@@ -42,29 +42,29 @@ func (s *Storage) AddEvent(ctx context.Context, event *storage.Event) error {
 
 	id := s.count
 
-	if s.events[event.UserId] == nil {
-		s.events[event.UserId] = make(map[int]*storage.Event)
+	if s.events[event.UserID] == nil {
+		s.events[event.UserID] = make(map[int]*storage.Event)
 	}
 
-	s.events[event.UserId][id] = event
-	s.count += 1
+	s.events[event.UserID][id] = event
+	s.count++
 
 	return nil
 }
 
-func (s *Storage) UpdateEvent(ctx context.Context, updated *storage.Event) error {
+func (s *Storage) UpdateEvent(_ context.Context, updated *storage.Event) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if updated.UserId == 0 {
-		return app.ErrUserIdRequired
+	if updated.UserID == 0 {
+		return app.ErrUserIDRequired
 	}
 
 	if updated.ID == 0 {
-		return app.ErrEventIdRequired
+		return app.ErrEventIDRequired
 	}
 
-	findEvent, ok := s.events[updated.UserId][updated.ID]
+	findEvent, ok := s.events[updated.UserID][updated.ID]
 	if !ok {
 		return ErrEventNotFound
 	}
@@ -81,11 +81,11 @@ func (s *Storage) UpdateEvent(ctx context.Context, updated *storage.Event) error
 		findEvent.Date = updated.Date
 	}
 
-	s.events[updated.UserId][updated.ID] = findEvent
+	s.events[updated.UserID][updated.ID] = findEvent
 	return nil
 }
 
-func (s *Storage) DeleteEvent(ctx context.Context, id int, userID int) error {
+func (s *Storage) DeleteEvent(_ context.Context, id int, userID int) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -98,17 +98,19 @@ func (s *Storage) DeleteEvent(ctx context.Context, id int, userID int) error {
 	return nil
 }
 
-func (s *Storage) ListEvents(ctx context.Context, userId int, dateFrom time.Time, dateTo time.Time) ([]storage.Event, error) {
+func (s *Storage) ListEvents(
+	_ context.Context, userID int, dateFrom time.Time, dateTo time.Time) ([]storage.Event, error) {
 	var results []storage.Event
 
-	for id, event := range s.events[userId] {
-		if (event.Date.After(dateFrom) || event.Date.Equal(dateFrom)) && (event.Date.Before(dateTo) || event.Date.Equal(dateTo)) {
+	for id, event := range s.events[userID] {
+		if (event.Date.After(dateFrom) || event.Date.Equal(dateFrom)) &&
+			(event.Date.Before(dateTo) || event.Date.Equal(dateTo)) {
 			results = append(results, storage.Event{
 				ID:       id,
 				Title:    event.Title,
 				Date:     event.Date,
 				Duration: event.Duration,
-				UserId:   event.UserId,
+				UserID:   event.UserID,
 			})
 		}
 	}

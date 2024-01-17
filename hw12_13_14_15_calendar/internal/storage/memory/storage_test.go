@@ -22,7 +22,7 @@ var testCases = []TestCases{
 	{
 		name: "First Event",
 		event: &storage2.Event{
-			UserId:   2,
+			UserID:   2,
 			Title:    "Meet",
 			Duration: "1:00:00",
 			Date:     time.Now(),
@@ -36,12 +36,12 @@ var testCases = []TestCases{
 			Duration: "0:30:00",
 			Date:     time.Now(),
 		},
-		errRequired: app.ErrUserIdRequired,
+		errRequired: app.ErrUserIDRequired,
 	},
 	{
 		name: "Third Event",
 		event: &storage2.Event{
-			UserId:   2,
+			UserID:   2,
 			Duration: "2:00:00",
 			Date:     time.Now(),
 		},
@@ -50,7 +50,7 @@ var testCases = []TestCases{
 	{
 		name: "Fourth Event",
 		event: &storage2.Event{
-			UserId: 3,
+			UserID: 3,
 			Title:  "Daily",
 			Date:   time.Now(),
 		},
@@ -59,7 +59,7 @@ var testCases = []TestCases{
 	{
 		name: "Fourth Event",
 		event: &storage2.Event{
-			UserId:   3,
+			UserID:   3,
 			Title:    "Daily",
 			Duration: "2:00:00",
 		},
@@ -76,7 +76,8 @@ func TestStorage(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			err := storage.AddEvent(ctx, testCase.event)
-			if testCase.event != nil {
+
+			if testCase.errRequired != nil {
 				require.ErrorIs(t, err, testCase.errRequired)
 			}
 		})
@@ -84,9 +85,7 @@ func TestStorage(t *testing.T) {
 
 	t.Run("List Events", func(t *testing.T) {
 		listEvents, err := storage.ListEvents(ctx, 2, time.Now().Add(-time.Minute), time.Now().AddDate(0, 0, 1))
-		if err != nil {
-			fmt.Println(err)
-		}
+		require.NoError(t, err)
 
 		require.Equal(t, len(listEvents), 1)
 	})
@@ -95,26 +94,25 @@ func TestStorage(t *testing.T) {
 		newTitle := "New Title 12345678910"
 		updated := &storage2.Event{
 			ID:     1,
-			UserId: 2,
+			UserID: 2,
 			Title:  newTitle,
 		}
 		err := storage.UpdateEvent(ctx, updated)
+		require.NoError(t, err)
 
 		listEvents, err := storage.ListEvents(ctx, 2, time.Now().Add(-time.Minute), time.Now().AddDate(0, 0, 1))
-		if err != nil {
-			fmt.Println(err)
-		}
+		require.NoError(t, err)
 
 		require.Equal(t, listEvents[0].Title, newTitle)
 	})
 
 	t.Run("Delete Event", func(t *testing.T) {
 		err := storage.DeleteEvent(ctx, 1, 2)
+		require.NoError(t, err)
 
 		listEvents, err := storage.ListEvents(ctx, 2, time.Now().Add(-time.Minute), time.Now().AddDate(0, 0, 1))
-		if err != nil {
-			fmt.Println(err)
-		}
+
+		require.NoError(t, err)
 		require.Equal(t, len(listEvents), 0)
 	})
 
@@ -127,7 +125,7 @@ func TestStorage(t *testing.T) {
 			go func(i int) {
 				defer wg.Done()
 				event := &storage2.Event{
-					UserId:   2,
+					UserID:   2,
 					Title:    fmt.Sprintf("Event %d", i),
 					Duration: "1:00:00",
 					Date:     time.Now(),

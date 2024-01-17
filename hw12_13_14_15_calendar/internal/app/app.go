@@ -12,8 +12,8 @@ var (
 	ErrDateBusy         = errors.New("invalid string")
 	ErrUserCantChange   = errors.New("user id can't change")
 	ErrDateRange        = errors.New("invalid date range type")
-	ErrEventIdRequired  = errors.New("event id required")
-	ErrUserIdRequired   = errors.New("user id is required")
+	ErrEventIDRequired  = errors.New("event id required")
+	ErrUserIDRequired   = errors.New("user id is required")
 	ErrDateRequired     = errors.New("date is required")
 	ErrDurationRequired = errors.New("duration is required")
 	ErrTitleRequired    = errors.New("title is required")
@@ -41,7 +41,7 @@ type Storage interface {
 	AddEvent(ctx context.Context, event *storage2.Event) error
 	UpdateEvent(ctx context.Context, updated *storage2.Event) error
 	DeleteEvent(ctx context.Context, id int, userID int) error
-	ListEvents(ctx context.Context, userId int, dateFrom time.Time, dateTo time.Time) ([]storage2.Event, error)
+	ListEvents(ctx context.Context, userID int, dateFrom time.Time, dateTo time.Time) ([]storage2.Event, error)
 }
 
 func New(logger Logger, storage Storage) *App {
@@ -55,23 +55,21 @@ func (a *App) CreateEvent(ctx context.Context, event *storage2.Event) error {
 	return a.storage.AddEvent(ctx, event)
 }
 
-func (a *App) GetEventsForRange(ctx context.Context, userId int, dateFrom time.Time, dateRange int) ([]storage2.Event, error) {
+func (a *App) GetEventsForRange(
+	ctx context.Context, userID int, dateFrom time.Time, dateRange int) ([]storage2.Event, error) {
 	var dateTo time.Time
 	switch dateRange {
 	case DAY:
 		dateTo = dateFrom.AddDate(0, 0, 1)
-		break
 	case WEEK:
 		dateTo = dateFrom.AddDate(0, 0, 7)
-		break
 	case MONTH:
 		dateTo = dateFrom.AddDate(0, 1, 0)
-		break
 	default:
 		return nil, ErrDateRange
 	}
 
-	listEvents, err := a.storage.ListEvents(ctx, userId, dateFrom, dateTo)
+	listEvents, err := a.storage.ListEvents(ctx, userID, dateFrom, dateTo)
 	if err != nil {
 		return nil, err
 	}

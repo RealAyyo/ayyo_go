@@ -13,12 +13,12 @@ import (
 type Config struct {
 	Logger  LoggerConf `yaml:"logger"`
 	Storage Storage    `yaml:"storage"`
-	Db      DbConf     `yaml:"db"`
-	Http    HttpConf   `yaml:"http"`
+	DB      DBConf     `yaml:"db"`
+	HTTP    HTTPConf   `yaml:"http"`
 	Env     string     `yaml:"env"  env-default:"local"`
 }
 
-type DbConf struct {
+type DBConf struct {
 	Host     string `yaml:"host" env-default:"localhost"`
 	Port     string `yaml:"port" env-default:"5432"`
 	Database string `yaml:"database" env-required:"true"`
@@ -26,7 +26,7 @@ type DbConf struct {
 	Password string `yaml:"password" env-required:"true"`
 }
 
-type HttpConf struct {
+type HTTPConf struct {
 	Host string `yaml:"host" env-default:"0.0.0.0"`
 	Port string `yaml:"port" env-default:"8888"`
 }

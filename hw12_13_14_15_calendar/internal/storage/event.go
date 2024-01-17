@@ -9,5 +9,5 @@ type Event struct {
 	Title    string
 	Date     time.Time
 	Duration string
-	UserId   int
+	UserID   int
 }

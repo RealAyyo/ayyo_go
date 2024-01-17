@@ -2,7 +2,7 @@ package internalhttp
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"time"
@@ -26,12 +26,12 @@ type Logger interface {
 
 type Application interface {
 	CreateEvent(ctx context.Context, event *storage2.Event) error
-	GetEventsForRange(ctx context.Context, userId int, dateFrom time.Time, dateRange int) ([]storage2.Event, error)
+	GetEventsForRange(ctx context.Context, userID int, dateFrom time.Time, dateRange int) ([]storage2.Event, error)
 }
 
-func NewServer(logger Logger, app Application, config config.HttpConf) *Server {
+func NewServer(logger Logger, app Application, config config.HTTPConf) *Server {
 	addr := net.JoinHostPort(config.Host, config.Port)
-	httpServer := &http.Server{Addr: addr}
+	httpServer := &http.Server{Addr: addr, ReadHeaderTimeout: 2 * time.Second}
 
 	http.HandleFunc("/", helloHandler)
 
@@ -56,9 +56,9 @@ func (s *Server) Stop(ctx context.Context) error {
 	return err
 }
 
-func helloHandler(w http.ResponseWriter, r *http.Request) {
+func helloHandler(_ http.ResponseWriter, r *http.Request) {
 	ip := ReadUserIP(r)
-	fmt.Println(fmt.Sprintf(
+	log.Printf(
 		"%v [%v] %v %v %v %v %v %v",
 		ip,
 		time.Now().Format("02/Jan/2006:15:04:05 -0700"),
@@ -68,7 +68,7 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 		200,
 		100,
 		r.UserAgent(),
-	))
+	)
 }
 
 func ReadUserIP(r *http.Request) string {

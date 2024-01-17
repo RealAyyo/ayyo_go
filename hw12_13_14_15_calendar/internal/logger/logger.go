@@ -14,20 +14,15 @@ func New(level string) Logger {
 	switch level {
 	case "INFO":
 		slogLevel = slog.LevelInfo
-		break
 	case "WARN":
 		slogLevel = slog.LevelWarn
-		break
 	case "DEBUG":
 		slogLevel = slog.LevelDebug
-		break
 	case "ERROR":
 		slogLevel = slog.LevelError
-		break
 	}
-	var log *slog.Logger
 
-	log = slog.New(
+	log := slog.New(
 		slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slogLevel}))
 
 	return Logger{logger: log}

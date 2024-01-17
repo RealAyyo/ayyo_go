@@ -25,7 +25,7 @@ type Storage struct {
 	database string
 }
 
-func New(ctx context.Context, conf config.DbConf) (*Storage, error) {
+func New(ctx context.Context, conf config.DBConf) (*Storage, error) {
 	sqlStorage := &Storage{
 		username: conf.Username,
 		password: conf.Password,
@@ -71,7 +71,7 @@ func (s *Storage) AddEvent(ctx context.Context, event *storage.Event) error {
 	_, err := s.db.Exec(
 		ctx,
 		"INSERT INTO events (title, date, duration, user_id) VALUES ($1, $2, $3, $4)",
-		event.Title, event.Date, event.Duration, event.UserId)
+		event.Title, event.Date, event.Duration, event.UserID)
 	if err != nil {
 		return err
 	}
@@ -84,12 +84,12 @@ func (s *Storage) UpdateEvent(ctx context.Context, updated *storage.Event) error
 	var args []interface{}
 	argIndex := 1
 
-	if updated.UserId == 0 {
-		return app.ErrUserIdRequired
+	if updated.UserID == 0 {
+		return app.ErrUserIDRequired
 	}
 
 	setParts = append(setParts, fmt.Sprintf("user_id = $%d", argIndex))
-	args = append(args, updated.UserId)
+	args = append(args, updated.UserID)
 	argIndex++
 
 	if updated.Title != "" {
@@ -133,13 +133,14 @@ func (s *Storage) DeleteEvent(ctx context.Context, id int, userID int) error {
 	return nil
 }
 
-func (s *Storage) ListEvents(ctx context.Context, userId int, dateFrom time.Time, dateTo time.Time) ([]storage.Event, error) {
+func (s *Storage) ListEvents(
+	ctx context.Context, userID int, dateFrom time.Time, dateTo time.Time) ([]storage.Event, error) {
 	var events []storage.Event
 
 	rows, err := s.db.Query(
 		ctx,
 		"SELECT id, title, date, duration::text, user_id FROM events WHERE user_id = $1 AND date >= $2 AND date <= $3",
-		userId,
+		userID,
 		dateFrom,
 		dateTo,
 	)
@@ -151,7 +152,7 @@ func (s *Storage) ListEvents(ctx context.Context, userId int, dateFrom time.Time
 	for rows.Next() {
 		var event storage.Event
 
-		err = rows.Scan(&event.ID, &event.Title, &event.Date, &event.Duration, &event.UserId)
+		err = rows.Scan(&event.ID, &event.Title, &event.Date, &event.Duration, &event.UserID)
 		if err != nil {
 			return nil, err
 		}
