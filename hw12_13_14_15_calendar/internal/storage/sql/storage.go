@@ -67,7 +67,6 @@ func (s *Storage) AddEvent(ctx context.Context, event *storage.Event) error {
 }
 
 func (s *Storage) UpdateEvent(ctx context.Context, updated *storage.Event) error {
-
 	if updated.UserID == 0 {
 		return app.ErrUserIDRequired
 	}
