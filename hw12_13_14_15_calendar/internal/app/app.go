@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	storage2 "github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/storage"
+	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/storage"
 )
 
 var (
@@ -27,7 +27,7 @@ const (
 
 type App struct {
 	logger  Logger
-	storage Storage
+	storage StorageService
 }
 
 type Logger interface {
@@ -37,27 +37,27 @@ type Logger interface {
 	Warn(msg string, attrs ...any)
 }
 
-type Storage interface {
-	AddEvent(ctx context.Context, event *storage2.Event) error
-	UpdateEvent(ctx context.Context, updated *storage2.Event) error
+type StorageService interface {
+	AddEvent(ctx context.Context, event *storage.Event) error
+	UpdateEvent(ctx context.Context, updated *storage.Event) error
 	DeleteEvent(ctx context.Context, id int, userID int) error
-	ListEvents(ctx context.Context, userID int, dateFrom time.Time, dateTo time.Time) ([]storage2.Event, error)
+	ListEvents(ctx context.Context, userID int, dateFrom time.Time, dateTo time.Time) ([]storage.Event, error)
 }
 
-func New(logger Logger, storage Storage) *App {
+func New(logger Logger, storage StorageService) *App {
 	return &App{
 		logger:  logger,
 		storage: storage,
 	}
 }
 
-func (a *App) CreateEvent(ctx context.Context, event *storage2.Event) error {
+func (a *App) CreateEvent(ctx context.Context, event *storage.Event) error {
 	return a.storage.AddEvent(ctx, event)
 }
 
 func (a *App) GetEventsForRange(
 	ctx context.Context, userID int, dateFrom time.Time, dateRange int,
-) ([]storage2.Event, error) {
+) ([]storage.Event, error) {
 	var dateTo time.Time
 	switch dateRange {
 	case DAY:

@@ -2,8 +2,6 @@ package sqlstorage
 
 import (
 	"context"
-	"fmt"
-	"strings"
 	"time"
 
 	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/app"
@@ -17,24 +15,13 @@ type Closer interface {
 }
 
 type Storage struct {
-	db       *pgx.Conn
-	username string
-	password string
-	host     string
-	port     string
-	database string
+	db *pgx.Conn
 }
 
 func New(ctx context.Context, conf config.DBConf) (*Storage, error) {
-	sqlStorage := &Storage{
-		username: conf.Username,
-		password: conf.Password,
-		host:     conf.Host,
-		port:     conf.Port,
-		database: conf.Database,
-	}
+	sqlStorage := &Storage{}
 
-	err := sqlStorage.Connect(ctx)
+	err := sqlStorage.Connect(ctx, conf)
 	if err != nil {
 		return nil, err
 	}
@@ -42,9 +29,9 @@ func New(ctx context.Context, conf config.DBConf) (*Storage, error) {
 	return sqlStorage, nil
 }
 
-func (s *Storage) Connect(ctx context.Context) error {
-	connString := "postgres://" + s.username + ":" + s.password + "@" + s.host + ":" + s.port + "/" + s.database
-	fmt.Println(connString)
+func (s *Storage) Connect(ctx context.Context, conf config.DBConf) error {
+	connString := "postgres://" + conf.Username + ":" + conf.Password + "@" + conf.Host + ":" + conf.Port + "/" + conf.Database
+
 	conn, err := pgx.Connect(ctx, connString)
 	if err != nil {
 		return err
@@ -80,40 +67,12 @@ func (s *Storage) AddEvent(ctx context.Context, event *storage.Event) error {
 }
 
 func (s *Storage) UpdateEvent(ctx context.Context, updated *storage.Event) error {
-	var setParts []string
-	var args []interface{}
-	argIndex := 1
 
 	if updated.UserID == 0 {
 		return app.ErrUserIDRequired
 	}
 
-	setParts = append(setParts, fmt.Sprintf("user_id = $%d", argIndex))
-	args = append(args, updated.UserID)
-	argIndex++
-
-	if updated.Title != "" {
-		setParts = append(setParts, fmt.Sprintf("title = $%d", argIndex))
-		args = append(args, updated.Title)
-		argIndex++
-	}
-
-	if updated.Duration != "" {
-		setParts = append(setParts, fmt.Sprintf("duration = $%d", argIndex))
-		args = append(args, updated.Duration)
-		argIndex++
-	}
-
-	if updated.Date.IsZero() {
-		setParts = append(setParts, fmt.Sprintf("date = $%d", argIndex))
-		args = append(args, updated.Date)
-		argIndex++
-	}
-
-	queryString := fmt.Sprintf("UPDATE events SET %s WHERE id = $%d", strings.Join(setParts, ", "), argIndex)
-	args = append(args, updated.ID)
-
-	_, err := s.db.Exec(ctx, queryString, args...)
+	_, err := s.db.Exec(ctx, "UPDATE events SET title = $1, duration = $2, date = $3, WHERE id = $5 AND user_id = $6", updated.Title, updated.Duration, updated.Date, updated.ID, updated.UserID)
 	if err != nil {
 		return err
 	}

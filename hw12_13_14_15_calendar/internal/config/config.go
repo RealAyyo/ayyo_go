@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"flag"
 	"os"
 
@@ -10,6 +11,12 @@ import (
 // При желании конфигурацию можно вынести в internal/config.
 // Организация конфига в main принуждает нас сужать API компонентов, использовать
 // при их конструировании только необходимые параметры, а также уменьшает вероятность циклической зависимости.
+
+var (
+	ErrConfigNotFound   = errors.New("config not found")
+	ErrFailedReadConfig = errors.New("failed to read config")
+)
+
 type Config struct {
 	Logger  LoggerConf `yaml:"logger"`
 	Storage Storage    `yaml:"storage"`
@@ -39,22 +46,22 @@ type LoggerConf struct {
 	Level string `yaml:"level" env-default:"INFO"`
 }
 
-func NewConfig() *Config {
+func NewConfig() (*Config, error) {
 	configPath := fetchConfigPath()
 	if configPath == "" {
-		panic("Path config is empty")
+		return nil, ErrConfigNotFound
 	}
 
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		panic("Config not found")
+		return nil, ErrConfigNotFound
 	}
 
 	var cfg Config
 
 	if err := cleanenv.ReadConfig(configPath, &cfg); err != nil {
-		panic("Failed to read config: " + err.Error())
+		return nil, ErrFailedReadConfig
 	}
-	return &cfg
+	return &cfg, nil
 }
 
 func fetchConfigPath() string {

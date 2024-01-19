@@ -2,13 +2,18 @@ package internalhttp
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net"
 	"net/http"
 	"time"
 
 	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/config"
-	storage2 "github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/storage"
+	storage "github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/storage"
+)
+
+const (
+	Timeout = 2
 )
 
 type Server struct {
@@ -25,13 +30,13 @@ type Logger interface {
 }
 
 type Application interface {
-	CreateEvent(ctx context.Context, event *storage2.Event) error
-	GetEventsForRange(ctx context.Context, userID int, dateFrom time.Time, dateRange int) ([]storage2.Event, error)
+	CreateEvent(ctx context.Context, event *storage.Event) error
+	GetEventsForRange(ctx context.Context, userID int, dateFrom time.Time, dateRange int) ([]storage.Event, error)
 }
 
 func NewServer(logger Logger, app Application, config config.HTTPConf) *Server {
 	addr := net.JoinHostPort(config.Host, config.Port)
-	httpServer := &http.Server{Addr: addr, ReadHeaderTimeout: 2 * time.Second}
+	httpServer := &http.Server{Addr: addr, ReadHeaderTimeout: Timeout * time.Second}
 
 	http.HandleFunc("/", helloHandler)
 
@@ -43,7 +48,7 @@ func NewServer(logger Logger, app Application, config config.HTTPConf) *Server {
 }
 
 func (s *Server) Start(ctx context.Context) error {
-	if err := s.httpServer.ListenAndServe(); err != http.ErrServerClosed {
+	if err := s.httpServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}
 

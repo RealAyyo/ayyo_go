@@ -10,11 +10,16 @@ import (
 	"time"
 
 	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/app"
-	config2 "github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/config"
+	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/config"
 	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/logger"
 	internalhttp "github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/server/http"
 	memorystorage "github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/storage/memory"
 	sqlstorage "github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/storage/sql"
+)
+
+const (
+	StorageTypeSql    = "SQL"
+	StorageTypeMemory = "MEMORY"
 )
 
 func main() {
@@ -23,23 +28,26 @@ func main() {
 		return
 	}
 
-	config := config2.NewConfig()
+	conf, err := config.NewConfig()
+	if err != nil {
+		log.Fatalf("load config error: " + err.Error())
+	}
 
-	logg := logger.New(config.Logger.Level)
+	logg := logger.New(conf.Logger.Level)
 
-	var storage app.Storage
-	var err error
+	var storage app.StorageService
 	ctx := context.Background()
 
-	switch config.Storage.Type {
-	case "MEMORY":
+	switch conf.Storage.Type {
+	case StorageTypeMemory:
 		storage, err = memorystorage.New()
-	case "SQL":
-		storage, err = sqlstorage.New(ctx, config.DB)
+	case StorageTypeSql:
+		storage, err = sqlstorage.New(ctx, conf.DB)
 	}
 
 	if err != nil {
-		panic(err)
+		logg.Error("failed to init storage: " + err.Error())
+		os.Exit(1) //nolint:gocritic
 	}
 
 	defer func() {
@@ -53,7 +61,7 @@ func main() {
 
 	calendar := app.New(logg, storage)
 
-	server := internalhttp.NewServer(logg, calendar, config.HTTP)
+	server := internalhttp.NewServer(logg, calendar, conf.HTTP)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
