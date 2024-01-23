@@ -38,7 +38,7 @@ func NewServer(logger Logger, app Application, config config.HTTPConf) *Server {
 	addr := net.JoinHostPort(config.Host, config.Port)
 	httpServer := &http.Server{Addr: addr, ReadHeaderTimeout: Timeout * time.Second}
 
-	http.HandleFunc("/", helloHandler)
+	http.Handle("/", loggingMiddleware(http.HandlerFunc(helloHandler)))
 
 	return &Server{
 		logger:     logger,
@@ -61,7 +61,7 @@ func (s *Server) Stop(ctx context.Context) error {
 	return err
 }
 
-func helloHandler(_ http.ResponseWriter, r *http.Request) {
+func helloHandler(w http.ResponseWriter, r *http.Request) {
 	ip := ReadUserIP(r)
 	log.Printf(
 		"%v [%v] %v %v %v %v %v %v",
