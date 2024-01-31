@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package event;
+
+service event {
+  rpc Create() returns () {}
+}
+
+message Event {
+  int32 ID = 1;
+  string Title = 2;
+  string Date = 3;
+  string Duration = 4;
+  int32 UserID = 5;
+}
