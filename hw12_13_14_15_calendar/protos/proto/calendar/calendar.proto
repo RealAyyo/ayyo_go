@@ -1,9 +1,15 @@
 syntax = "proto3";
+import "google/protobuf/timestamp.proto";
 
-package event;
+package calendar;
 
-service event {
-  rpc Create() returns () {}
+service Calendar {
+  rpc CreateEvent(CreateEventRequest) returns (EventResponse) {}
+  rpc UpdateEvent(UpdateEventRequest) returns (EventResponse) {}
+  rpc DeleteEvent(DeleteEventRequest) returns (DeleteEventResponse) {}
+  rpc ListEventsForDay(ListEventsRequest) returns (ListEventsResponse) {}
+  rpc ListEventsForWeek(ListEventsRequest) returns (ListEventsResponse) {}
+  rpc ListEventsForMonth(ListEventsRequest) returns (ListEventsResponse) {}
 }
 
 message Event {
@@ -13,3 +19,39 @@ message Event {
   string Duration = 4;
   int32 UserID = 5;
 }
+
+message CreateEventRequest {
+  string Title = 1;
+  google.protobuf.Timestamp Date = 2;
+  string Duration = 3;
+  int32 UserID = 4;
+}
+
+message UpdateEventRequest {
+  int32 ID = 1;
+  string Title = 2;
+  google.protobuf.Timestamp Date = 3;
+  string Duration = 4;
+  int32 UserID = 5;
+}
+
+message DeleteEventRequest {
+  int32 ID = 1;
+  int32 UserID = 2;
+}
+
+message EventResponse {
+  Event event = 1;
+}
+
+message ListEventsRequest {
+  int32 UserID = 1;
+  string DateFrom = 2;
+  string DateTo = 3;
+}
+
+message ListEventsResponse {
+  repeated Event events = 1;
+}
+
+message DeleteEventResponse {}
