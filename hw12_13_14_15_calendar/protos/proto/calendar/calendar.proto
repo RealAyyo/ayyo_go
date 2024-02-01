@@ -2,6 +2,7 @@ syntax = "proto3";
 import "google/protobuf/timestamp.proto";
 
 package calendar;
+option go_package = "RealAyyo.hw12_13_14_15_calendar;calendar_v1";
 
 service Calendar {
   rpc CreateEvent(CreateEventRequest) returns (EventResponse) {}
