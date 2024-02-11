@@ -9,7 +9,8 @@ import (
 	"time"
 
 	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/config"
-	storage "github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/storage"
+	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/server"
+	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/storage"
 )
 
 const (
@@ -18,23 +19,18 @@ const (
 
 type Server struct {
 	httpServer *http.Server
-	logger     Logger
+	logger     server.Logger
 	app        Application
 }
 
-type Logger interface {
-	Info(msg string, attrs ...any)
-	Error(msg string, attrs ...any)
-	Debug(msg string, attrs ...any)
-	Warn(msg string, attrs ...any)
-}
-
 type Application interface {
-	CreateEvent(ctx context.Context, event *storage.Event) error
-	GetEventsForRange(ctx context.Context, userID int, dateFrom time.Time, dateRange int) ([]storage.Event, error)
+	UpdateEvent(ctx context.Context, event *storage.Event) (int, error)
+	DeleteEvent(ctx context.Context, eventID int, userID int) error
+	CreateEvent(ctx context.Context, event *storage.Event) (int, error)
+	GetEventsForRange(ctx context.Context, userID int, dateFrom int64, dateTo int64) ([]storage.Event, error)
 }
 
-func NewServer(logger Logger, app Application, config config.HTTPConf) *Server {
+func NewServer(logger server.Logger, app Application, config config.HTTPConf) *Server {
 	addr := net.JoinHostPort(config.Host, config.Port)
 	httpServer := &http.Server{Addr: addr, ReadHeaderTimeout: Timeout * time.Second}
 

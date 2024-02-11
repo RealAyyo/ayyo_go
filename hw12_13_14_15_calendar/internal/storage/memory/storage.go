@@ -20,24 +20,24 @@ type Storage struct {
 	mu     sync.RWMutex
 }
 
-func (s *Storage) AddEvent(_ context.Context, event *storage.Event) error {
+func (s *Storage) AddEvent(_ context.Context, event *storage.Event) (int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if event.UserID == 0 {
-		return app.ErrUserIDRequired
+		return 0, app.ErrUserIDRequired
 	}
 
 	if event.Title == "" {
-		return app.ErrTitleRequired
+		return 0, app.ErrTitleRequired
 	}
 
 	if event.Date.IsZero() {
-		return app.ErrDateRequired
+		return 0, app.ErrDateRequired
 	}
 
 	if event.Duration == "" {
-		return app.ErrDurationRequired
+		return 0, app.ErrDurationRequired
 	}
 
 	id := s.count
@@ -49,24 +49,24 @@ func (s *Storage) AddEvent(_ context.Context, event *storage.Event) error {
 	s.events[event.UserID][id] = event
 	s.count++
 
-	return nil
+	return id, nil
 }
 
-func (s *Storage) UpdateEvent(_ context.Context, updated *storage.Event) error {
+func (s *Storage) UpdateEvent(_ context.Context, updated *storage.Event) (int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if updated.UserID == 0 {
-		return app.ErrUserIDRequired
+		return 0, app.ErrUserIDRequired
 	}
 
 	if updated.ID == 0 {
-		return app.ErrEventIDRequired
+		return 0, app.ErrEventIDRequired
 	}
 
 	findEvent, ok := s.events[updated.UserID][updated.ID]
 	if !ok {
-		return ErrEventNotFound
+		return 0, ErrEventNotFound
 	}
 
 	if updated.Title != "" {
@@ -82,7 +82,7 @@ func (s *Storage) UpdateEvent(_ context.Context, updated *storage.Event) error {
 	}
 
 	s.events[updated.UserID][updated.ID] = findEvent
-	return nil
+	return updated.ID, nil
 }
 
 func (s *Storage) DeleteEvent(_ context.Context, id int, userID int) error {
@@ -118,6 +118,10 @@ func (s *Storage) ListEvents(
 	return results, nil
 }
 
+func (s *Storage) CheckEventOverlaps(ctx context.Context, date time.Time, duration string) (bool, error) {
+	return false, nil
+
+}
 func New() (*Storage, error) {
 	return &Storage{
 		count:  1,
