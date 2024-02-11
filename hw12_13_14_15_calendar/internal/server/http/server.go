@@ -3,7 +3,6 @@ package internalhttp
 import (
 	"context"
 	"errors"
-	"log"
 	"net"
 	"net/http"
 	"time"
@@ -55,21 +54,6 @@ func (s *Server) Start(ctx context.Context) error {
 func (s *Server) Stop(ctx context.Context) error {
 	err := s.httpServer.Shutdown(ctx)
 	return err
-}
-
-func helloHandler(w http.ResponseWriter, r *http.Request) {
-	ip := ReadUserIP(r)
-	log.Printf(
-		"%v [%v] %v %v %v %v %v %v",
-		ip,
-		time.Now().Format("02/Jan/2006:15:04:05 -0700"),
-		r.Method,
-		r.URL.Path,
-		r.Proto,
-		200,
-		100,
-		r.UserAgent(),
-	)
 }
 
 func ReadUserIP(r *http.Request) string {

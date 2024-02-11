@@ -3,7 +3,6 @@ package controllers
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -14,6 +13,14 @@ import (
 type EventController struct {
 	app       Application
 	validator Validator
+	logger    Logger
+}
+
+type Logger interface {
+	Info(msg string, attrs ...any)
+	Error(msg string, attrs ...any)
+	Debug(msg string, attrs ...any)
+	Warn(msg string, attrs ...any)
 }
 
 type Validator interface {
@@ -27,10 +34,11 @@ type Application interface {
 	GetEventsByRange(ctx context.Context, userID int, dateFrom int64, dateTo int64) ([]storage.Event, error)
 }
 
-func NewEventController(app Application, validator Validator) *EventController {
+func NewEventController(app Application, validator Validator, logger Logger) *EventController {
 	return &EventController{
 		app:       app,
 		validator: validator,
+		logger:    logger,
 	}
 }
 
@@ -40,13 +48,9 @@ func (e *EventController) CreateEvent(w http.ResponseWriter, r *http.Request) {
 
 	var dto CreateEventDto
 	err := e.validator.Validate("POST", r, &dto)
+	err = sendErrorResponse(err, w)
 	if err != nil {
-		resp := ErrorResponse{
-			Message: err.Error(),
-			Err:     ErrHas,
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(resp)
+		e.logger.Error(ErrEncodeJson.Error(), ErrEncodeJson)
 		return
 	}
 
@@ -60,13 +64,9 @@ func (e *EventController) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id, err := e.app.CreateEvent(ctx, event)
+	err = sendErrorResponse(err, w)
 	if err != nil {
-		resp := ErrorResponse{
-			Message: err.Error(),
-			Err:     ErrHas,
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(resp)
+		e.logger.Error(ErrEncodeJson.Error(), ErrEncodeJson)
 		return
 	}
 
@@ -77,8 +77,13 @@ func (e *EventController) CreateEvent(w http.ResponseWriter, r *http.Request) {
 		},
 		Err: ErrNo,
 	}
+
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(resp)
+	err = json.NewEncoder(w).Encode(resp)
+	if err != nil {
+		e.logger.Error(ErrEncodeJson.Error(), ErrEncodeJson)
+		return
+	}
 }
 
 func (e *EventController) UpdateEvent(w http.ResponseWriter, r *http.Request) {
@@ -87,13 +92,9 @@ func (e *EventController) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 
 	var dto UpdateEventDto
 	err := e.validator.Validate("PATCH", r, &dto)
+	err = sendErrorResponse(err, w)
 	if err != nil {
-		resp := ErrorResponse{
-			Message: err.Error(),
-			Err:     ErrHas,
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(resp)
+		e.logger.Error(ErrEncodeJson.Error(), ErrEncodeJson)
 		return
 	}
 
@@ -108,13 +109,9 @@ func (e *EventController) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id, err := e.app.UpdateEvent(ctx, event)
+	err = sendErrorResponse(err, w)
 	if err != nil {
-		resp := ErrorResponse{
-			Message: err.Error(),
-			Err:     ErrHas,
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(resp)
+		e.logger.Error(ErrEncodeJson.Error(), ErrEncodeJson)
 		return
 	}
 
@@ -126,7 +123,11 @@ func (e *EventController) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 		Err: ErrNo,
 	}
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(resp)
+	err = json.NewEncoder(w).Encode(resp)
+	if err != nil {
+		e.logger.Error(ErrEncodeJson.Error(), ErrEncodeJson)
+		return
+	}
 }
 
 func (e *EventController) DeleteEvent(w http.ResponseWriter, r *http.Request) {
@@ -135,24 +136,16 @@ func (e *EventController) DeleteEvent(w http.ResponseWriter, r *http.Request) {
 
 	var dto DeleteEventDto
 	err := e.validator.Validate("POST", r, &dto)
+	err = sendErrorResponse(err, w)
 	if err != nil {
-		resp := ErrorResponse{
-			Message: err.Error(),
-			Err:     ErrHas,
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(resp)
+		e.logger.Error(ErrEncodeJson.Error(), ErrEncodeJson)
 		return
 	}
 
 	err = e.app.DeleteEvent(ctx, dto.ID, dto.UserID)
+	err = sendErrorResponse(err, w)
 	if err != nil {
-		resp := ErrorResponse{
-			Message: err.Error(),
-			Err:     ErrHas,
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(resp)
+		e.logger.Error(ErrEncodeJson.Error(), ErrEncodeJson)
 		return
 	}
 
@@ -164,7 +157,11 @@ func (e *EventController) DeleteEvent(w http.ResponseWriter, r *http.Request) {
 		Err: ErrNo,
 	}
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(resp)
+	err = json.NewEncoder(w).Encode(resp)
+	if err != nil {
+		e.logger.Error(ErrEncodeJson.Error(), ErrEncodeJson)
+		return
+	}
 }
 
 func (e *EventController) GetEventsByRange(w http.ResponseWriter, r *http.Request) {
@@ -173,43 +170,37 @@ func (e *EventController) GetEventsByRange(w http.ResponseWriter, r *http.Reques
 
 	var dto GetEventsDto
 	err := e.validator.Validate("GET", r, &dto)
+	err = sendErrorResponse(err, w)
 	if err != nil {
-		resp := ErrorResponse{
-			Message: err.Error(),
-			Err:     ErrHas,
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(resp)
+		e.logger.Error(ErrEncodeJson.Error(), ErrEncodeJson)
 		return
 	}
 
 	parsedUserID, err := strconv.ParseInt(dto.UserID, 10, 64)
-	parsedDataFrom, err := strconv.ParseInt(dto.DateFrom, 10, 64)
-	parsedDataTo, err := strconv.ParseInt(dto.DateTo, 10, 64)
+	err = sendErrorResponse(err, w)
 	if err != nil {
-		resp := ErrorResponse{
-			Message: err.Error(),
-			Err:     ErrHas,
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(resp)
+		e.logger.Error(ErrEncodeJson.Error(), ErrEncodeJson)
 		return
 	}
 
-	dateFrom := time.Unix(parsedDataFrom, 0)
-	dateTo := time.Unix(parsedDataTo, 0)
+	parsedDataFrom, err := strconv.ParseInt(dto.DateFrom, 10, 64)
+	err = sendErrorResponse(err, w)
+	if err != nil {
+		e.logger.Error(ErrEncodeJson.Error(), ErrEncodeJson)
+		return
+	}
 
-	fmt.Println(dateFrom)
-	fmt.Println(dateTo)
+	parsedDataTo, err := strconv.ParseInt(dto.DateTo, 10, 64)
+	err = sendErrorResponse(err, w)
+	if err != nil {
+		e.logger.Error(ErrEncodeJson.Error(), ErrEncodeJson)
+		return
+	}
 
 	events, err := e.app.GetEventsByRange(ctx, int(parsedUserID), parsedDataFrom, parsedDataTo)
+	err = sendErrorResponse(err, w)
 	if err != nil {
-		resp := ErrorResponse{
-			Message: err.Error(),
-			Err:     ErrHas,
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(resp)
+		e.logger.Error(ErrEncodeJson.Error(), ErrEncodeJson)
 		return
 	}
 
@@ -219,5 +210,9 @@ func (e *EventController) GetEventsByRange(w http.ResponseWriter, r *http.Reques
 		Err:     ErrNo,
 	}
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(resp)
+	err = json.NewEncoder(w).Encode(resp)
+	if err != nil {
+		e.logger.Error(ErrEncodeJson.Error(), ErrEncodeJson)
+		return
+	}
 }

@@ -8,6 +8,7 @@ import (
 
 	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/app"
 	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/storage"
+	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/pkg/utils"
 )
 
 var ErrEventNotFound = errors.New("event for update not found")
@@ -55,14 +56,6 @@ func (s *Storage) AddEvent(_ context.Context, event *storage.Event) (int, error)
 func (s *Storage) UpdateEvent(_ context.Context, updated *storage.Event) (int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-
-	if updated.UserID == 0 {
-		return 0, app.ErrUserIDRequired
-	}
-
-	if updated.ID == 0 {
-		return 0, app.ErrEventIDRequired
-	}
 
 	findEvent, ok := s.events[updated.UserID][updated.ID]
 	if !ok {
@@ -119,9 +112,26 @@ func (s *Storage) ListEvents(
 }
 
 func (s *Storage) CheckEventOverlaps(ctx context.Context, userID int, date time.Time, duration string) (bool, error) {
-	return false, nil
+	durationParsed, err := utils.ParseDuration(duration)
+	if err != nil {
+		return false, err
+	}
+	endTime := date.Add(durationParsed)
 
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	for _, event := range s.events[userID] {
+		eventEndTime := event.Date.Add(durationParsed)
+		if (event.Date.Before(endTime) && endTime.Before(eventEndTime)) ||
+			(date.Before(eventEndTime) && eventEndTime.Before(endTime)) {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
+
 func New() (*Storage, error) {
 	return &Storage{
 		count:  1,

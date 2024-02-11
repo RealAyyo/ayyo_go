@@ -14,8 +14,7 @@ var (
 	Validate      = validator.New()
 )
 
-type Validator struct {
-}
+type Validator struct{}
 
 func NewQueryValidator() *Validator {
 	return &Validator{}

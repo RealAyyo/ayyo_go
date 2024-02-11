@@ -29,8 +29,8 @@ type Application interface {
 	GetEventsByRange(ctx context.Context, userID int, dateFrom int64, dateTo int64) ([]storage.Event, error)
 }
 
-func NewServer(logger server.Logger, app Application, config config.GRPCConf) (*ServerAPI, error) {
-	grpcServer := grpc.NewServer()
+func NewServer(logger server.Logger, app Application, config config.GRPCConf) *ServerAPI {
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(loggingInterceptor))
 	serverAPI := &ServerAPI{
 		logger:     logger,
 		app:        app,
@@ -39,7 +39,7 @@ func NewServer(logger server.Logger, app Application, config config.GRPCConf) (*
 	}
 
 	calendarV1.RegisterCalendarServer(grpcServer, serverAPI)
-	return serverAPI, nil
+	return serverAPI
 }
 
 func (s *ServerAPI) CreateEvent(ctx context.Context, req *calendarV1.CreateEventRequest) (*calendarV1.EventResponse, error) {

@@ -66,10 +66,11 @@ func main() {
 
 	queryValidator := validators.NewQueryValidator()
 
-	eventController := controllers.NewEventController(calendar, queryValidator)
+	eventController := controllers.NewEventController(calendar, queryValidator, logg)
 
 	serverHttp := internalhttp.NewServer(logg, eventController, conf.HTTP)
-	serverGrpc, err := grpcServer.NewServer(logg, calendar, conf.GRPC)
+	serverGrpc := grpcServer.NewServer(logg, calendar, conf.GRPC)
+
 	go func() {
 		err := serverGrpc.Start()
 		if err != nil {

@@ -11,9 +11,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-var (
-	ErrEventNotFound = fmt.Errorf("event not found")
-)
+var ErrEventNotFound = fmt.Errorf("event not found")
 
 type Closer interface {
 	Close(ctx context.Context) error
@@ -166,7 +164,7 @@ func (s *Storage) CheckEventOverlaps(ctx context.Context, userID int, date time.
 		"SELECT COUNT(*) FROM events WHERE ((date <= $1 AND $1 < (date + duration)) OR ($2 <= date AND date < $2)) AND user_id = $3",
 		date, endTime, userID,
 	).Scan(&count)
-	fmt.Println(count)
+
 	if err != nil {
 		return false, err
 	}

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/app"
-	storage "github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/storage"
+	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/storage"
 	"github.com/stretchr/testify/require"
 )
 
@@ -75,8 +75,7 @@ func TestStorage(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			err := storageService.AddEvent(ctx, testCase.event)
-
+			_, err := storageService.AddEvent(ctx, testCase.event)
 			if testCase.errRequired != nil {
 				require.ErrorIs(t, err, testCase.errRequired)
 			}
@@ -97,13 +96,14 @@ func TestStorage(t *testing.T) {
 			UserID: 2,
 			Title:  newTitle,
 		}
-		err := storageService.UpdateEvent(ctx, updated)
+		id, err := storageService.UpdateEvent(ctx, updated)
 		require.NoError(t, err)
 
 		listEvents, err := storageService.ListEvents(ctx, 2, time.Now().Add(-time.Minute), time.Now().AddDate(0, 0, 1))
 		require.NoError(t, err)
 
 		require.Equal(t, listEvents[0].Title, newTitle)
+		require.Equal(t, id, updated.ID)
 	})
 
 	t.Run("Delete Event", func(t *testing.T) {
@@ -130,7 +130,8 @@ func TestStorage(t *testing.T) {
 					Duration: "1:00:00",
 					Date:     time.Now(),
 				}
-				err := storageService.AddEvent(ctx, event)
+
+				_, err := storageService.AddEvent(ctx, event)
 				require.NoError(t, err)
 			}(i)
 		}
