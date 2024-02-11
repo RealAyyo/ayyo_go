@@ -152,7 +152,7 @@ func (s *Storage) ListEvents(
 	return events, nil
 }
 
-func (s *Storage) CheckEventOverlaps(ctx context.Context, date time.Time, duration string) (bool, error) {
+func (s *Storage) CheckEventOverlaps(ctx context.Context, userID int, date time.Time, duration string) (bool, error) {
 	durationParsed, err := utils.ParseDuration(duration)
 	if err != nil {
 		return false, err
@@ -163,10 +163,10 @@ func (s *Storage) CheckEventOverlaps(ctx context.Context, date time.Time, durati
 	var count int
 	err = s.db.QueryRow(
 		ctx,
-		"SELECT COUNT(*) FROM events WHERE (date <= $1 AND $1 < (date + duration)) OR ($2 <= date AND date < $2)",
-		date, endTime,
+		"SELECT COUNT(*) FROM events WHERE ((date <= $1 AND $1 < (date + duration)) OR ($2 <= date AND date < $2)) AND user_id = $3",
+		date, endTime, userID,
 	).Scan(&count)
-
+	fmt.Println(count)
 	if err != nil {
 		return false, err
 	}

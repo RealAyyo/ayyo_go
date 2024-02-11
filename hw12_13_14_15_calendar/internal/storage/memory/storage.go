@@ -118,7 +118,7 @@ func (s *Storage) ListEvents(
 	return results, nil
 }
 
-func (s *Storage) CheckEventOverlaps(ctx context.Context, date time.Time, duration string) (bool, error) {
+func (s *Storage) CheckEventOverlaps(ctx context.Context, userID int, date time.Time, duration string) (bool, error) {
 	return false, nil
 
 }

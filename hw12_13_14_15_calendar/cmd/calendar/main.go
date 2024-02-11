@@ -11,11 +11,13 @@ import (
 
 	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/app"
 	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/config"
+	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/controllers"
 	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/logger"
 	grpcServer "github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/server/grpc"
 	internalhttp "github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/server/http"
 	memorystorage "github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/storage/memory"
 	sqlstorage "github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/storage/sql"
+	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/validators"
 )
 
 const (
@@ -61,7 +63,12 @@ func main() {
 	}()
 
 	calendar := app.New(logg, storage)
-	serverHttp := internalhttp.NewServer(logg, calendar, conf.HTTP)
+
+	queryValidator := validators.NewQueryValidator()
+
+	eventController := controllers.NewEventController(calendar, queryValidator)
+
+	serverHttp := internalhttp.NewServer(logg, eventController, conf.HTTP)
 	serverGrpc, err := grpcServer.NewServer(logg, calendar, conf.GRPC)
 	go func() {
 		err := serverGrpc.Start()

@@ -42,7 +42,7 @@ type StorageService interface {
 	UpdateEvent(ctx context.Context, updated *storage.Event) (int, error)
 	DeleteEvent(ctx context.Context, id int, userID int) error
 	ListEvents(ctx context.Context, userID int, dateFrom time.Time, dateTo time.Time) ([]storage.Event, error)
-	CheckEventOverlaps(ctx context.Context, date time.Time, duration string) (bool, error)
+	CheckEventOverlaps(ctx context.Context, userID int, date time.Time, duration string) (bool, error)
 }
 
 func New(logger Logger, storage StorageService) *App {
@@ -80,7 +80,7 @@ func (a *App) DeleteEvent(ctx context.Context, eventID int, userID int) error {
 }
 
 func (a *App) CreateEvent(ctx context.Context, event *storage.Event) (int, error) {
-	checkOverlap, err := a.storage.CheckEventOverlaps(ctx, event.Date, event.Duration)
+	checkOverlap, err := a.storage.CheckEventOverlaps(ctx, event.UserID, event.Date, event.Duration)
 	if err != nil {
 		return 0, err
 	}
@@ -91,7 +91,7 @@ func (a *App) CreateEvent(ctx context.Context, event *storage.Event) (int, error
 	return a.storage.AddEvent(ctx, event)
 }
 
-func (a *App) GetEventsForRange(ctx context.Context, userID int, dateFrom int64, dateTo int64) ([]storage.Event, error) {
+func (a *App) GetEventsByRange(ctx context.Context, userID int, dateFrom int64, dateTo int64) ([]storage.Event, error) {
 	parsedDateFrom := time.Unix(dateFrom, 0)
 	parsedDateTo := time.Unix(dateTo, 0)
 

@@ -10,7 +10,6 @@ import (
 
 	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/config"
 	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/server"
-	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/storage"
 )
 
 const (
@@ -20,25 +19,26 @@ const (
 type Server struct {
 	httpServer *http.Server
 	logger     server.Logger
-	app        Application
 }
 
-type Application interface {
-	UpdateEvent(ctx context.Context, event *storage.Event) (int, error)
-	DeleteEvent(ctx context.Context, eventID int, userID int) error
-	CreateEvent(ctx context.Context, event *storage.Event) (int, error)
-	GetEventsForRange(ctx context.Context, userID int, dateFrom int64, dateTo int64) ([]storage.Event, error)
+type EventController interface {
+	CreateEvent(w http.ResponseWriter, r *http.Request)
+	UpdateEvent(w http.ResponseWriter, r *http.Request)
+	DeleteEvent(w http.ResponseWriter, r *http.Request)
+	GetEventsByRange(w http.ResponseWriter, r *http.Request)
 }
 
-func NewServer(logger server.Logger, app Application, config config.HTTPConf) *Server {
+func NewServer(logger server.Logger, eventController EventController, config config.HTTPConf) *Server {
 	addr := net.JoinHostPort(config.Host, config.Port)
 	httpServer := &http.Server{Addr: addr, ReadHeaderTimeout: Timeout * time.Second}
 
-	http.Handle("/", loggingMiddleware(http.HandlerFunc(helloHandler)))
+	http.Handle("/", loggingMiddleware(http.HandlerFunc(eventController.GetEventsByRange)))
+	http.Handle("/create", loggingMiddleware(http.HandlerFunc(eventController.CreateEvent)))
+	http.Handle("/update", loggingMiddleware(http.HandlerFunc(eventController.UpdateEvent)))
+	http.Handle("/delete", loggingMiddleware(http.HandlerFunc(eventController.DeleteEvent)))
 
 	return &Server{
 		logger:     logger,
-		app:        app,
 		httpServer: httpServer,
 	}
 }

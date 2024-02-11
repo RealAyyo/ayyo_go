@@ -26,7 +26,7 @@ type Application interface {
 	UpdateEvent(ctx context.Context, event *storage.Event) (int, error)
 	DeleteEvent(ctx context.Context, eventID int, userID int) error
 	CreateEvent(ctx context.Context, event *storage.Event) (int, error)
-	GetEventsForRange(ctx context.Context, userID int, dateFrom int64, dateTo int64) ([]storage.Event, error)
+	GetEventsByRange(ctx context.Context, userID int, dateFrom int64, dateTo int64) ([]storage.Event, error)
 }
 
 func NewServer(logger server.Logger, app Application, config config.GRPCConf) (*ServerAPI, error) {
@@ -66,7 +66,7 @@ func (s *ServerAPI) CreateEvent(ctx context.Context, req *calendarV1.CreateEvent
 	}, nil
 }
 
-func (s *ServerAPI) UpdateEvent(ctx context.Context, req *calendarV1.UpdateEventRequest) (*calendarV1.IdEventRequest, error) {
+func (s *ServerAPI) UpdateEvent(ctx context.Context, req *calendarV1.UpdateEventRequest) (*calendarV1.IdEventResponse, error) {
 	event := &storage.Event{
 		ID:       int(req.GetID()),
 		Title:    req.GetTitle(),
@@ -80,20 +80,20 @@ func (s *ServerAPI) UpdateEvent(ctx context.Context, req *calendarV1.UpdateEvent
 		return nil, err
 	}
 
-	return &calendarV1.IdEventRequest{ID: int32(id)}, nil
+	return &calendarV1.IdEventResponse{ID: int32(id)}, nil
 }
 
-func (s *ServerAPI) DeleteEvent(ctx context.Context, req *calendarV1.DeleteEventRequest) (*calendarV1.IdEventRequest, error) {
+func (s *ServerAPI) DeleteEvent(ctx context.Context, req *calendarV1.DeleteEventRequest) (*calendarV1.IdEventResponse, error) {
 	err := s.app.DeleteEvent(ctx, int(req.GetID()), int(req.GetUserID()))
 	if err != nil {
 		return nil, err
 	}
 
-	return &calendarV1.IdEventRequest{ID: req.GetID()}, nil
+	return &calendarV1.IdEventResponse{ID: req.GetID()}, nil
 }
 
 func (s *ServerAPI) ListEvents(ctx context.Context, req *calendarV1.ListEventsRequest) (*calendarV1.ListEventsResponse, error) {
-	events, err := s.app.GetEventsForRange(ctx, int(req.GetUserID()), req.GetDateFrom(), req.GetDateTo())
+	events, err := s.app.GetEventsByRange(ctx, int(req.GetUserID()), req.GetDateFrom(), req.GetDateTo())
 	if err != nil {
 		return nil, err
 	}

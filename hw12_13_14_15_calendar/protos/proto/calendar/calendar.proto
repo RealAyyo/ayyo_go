@@ -6,8 +6,8 @@ option go_package = "RealAyyo.hw12_13_14_15_calendar;calendarV1";
 
 service Calendar {
   rpc CreateEvent(CreateEventRequest) returns (EventResponse) {}
-  rpc UpdateEvent(UpdateEventRequest) returns (IdEventRequest) {}
-  rpc DeleteEvent(DeleteEventRequest) returns (IdEventRequest) {}
+  rpc UpdateEvent(UpdateEventRequest) returns (IdEventResponse) {}
+  rpc DeleteEvent(DeleteEventRequest) returns (IdEventResponse) {}
   rpc ListEvents(ListEventsRequest) returns (ListEventsResponse) {}
 }
 
@@ -53,6 +53,6 @@ message ListEventsResponse {
   repeated Event events = 1;
 }
 
-message IdEventRequest {
+message IdEventResponse {
   int32 ID = 1;
 }
