@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/config"
-	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/server"
+	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/controllers"
 )
 
 const (
@@ -17,17 +17,9 @@ const (
 
 type Server struct {
 	httpServer *http.Server
-	logger     server.Logger
 }
 
-type EventController interface {
-	CreateEvent(w http.ResponseWriter, r *http.Request)
-	UpdateEvent(w http.ResponseWriter, r *http.Request)
-	DeleteEvent(w http.ResponseWriter, r *http.Request)
-	GetEventsByRange(w http.ResponseWriter, r *http.Request)
-}
-
-func NewServer(logger server.Logger, eventController EventController, config config.HTTPConf) *Server {
+func NewServer(eventController *controllers.EventController, config config.HTTPConf) *Server {
 	addr := net.JoinHostPort(config.Host, config.Port)
 	httpServer := &http.Server{Addr: addr, ReadHeaderTimeout: Timeout * time.Second}
 
@@ -37,7 +29,6 @@ func NewServer(logger server.Logger, eventController EventController, config con
 	http.Handle("/delete", loggingMiddleware(http.HandlerFunc(eventController.DeleteEvent)))
 
 	return &Server{
-		logger:     logger,
 		httpServer: httpServer,
 	}
 }

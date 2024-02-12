@@ -65,7 +65,7 @@ func main() {
 
 	eventController := controllers.NewEventController(calendar, logg)
 
-	serverHttp := internalhttp.NewServer(logg, eventController, conf.HTTP)
+	serverHttp := internalhttp.NewServer(eventController, conf.HTTP)
 	serverGrpc := grpcServer.NewServer(logg, calendar, conf.GRPC)
 
 	go func() {
