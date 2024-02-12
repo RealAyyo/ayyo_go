@@ -7,16 +7,22 @@ import (
 	"net"
 
 	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/config"
-	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/server"
 	calendarV1 "github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/server/grpc/RealAyyo.hw12_13_14_15_calendar"
 	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/storage"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+type Logger interface {
+	Info(msg string, attrs ...any)
+	Error(msg string, attrs ...any)
+	Debug(msg string, attrs ...any)
+	Warn(msg string, attrs ...any)
+}
+
 type ServerAPI struct {
 	calendarV1.UnimplementedCalendarServer
-	logger     server.Logger
+	logger     Logger
 	app        Application
 	GRPCServer *grpc.Server
 	port       string
@@ -29,7 +35,7 @@ type Application interface {
 	GetEventsByRange(ctx context.Context, userID int, dateFrom int64, dateTo int64) ([]storage.Event, error)
 }
 
-func NewServer(logger server.Logger, app Application, config config.GRPCConf) *ServerAPI {
+func NewServer(logger Logger, app Application, config config.GRPCConf) *ServerAPI {
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(loggingInterceptor))
 	serverAPI := &ServerAPI{
 		logger:     logger,
