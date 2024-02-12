@@ -1,0 +1,20 @@
+linters-settings:
+  depguard:
+    list-type: blacklist
+    packages:
+      - github.com/stretchr/testify/require
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+linters:
+  enable:
+    - errcheck
+    - goimports
+    - govet
+    - staticcheck
+    - gofmt
+    - gofumpt
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
