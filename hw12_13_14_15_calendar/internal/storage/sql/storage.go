@@ -2,6 +2,7 @@ package sqlstorage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -11,7 +12,10 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-var ErrEventNotFound = fmt.Errorf("event not found")
+var (
+	ErrEventNotFound = fmt.Errorf("event not found")
+	ErrDateBusy      = errors.New("date is busy")
+)
 
 type Closer interface {
 	Close(ctx context.Context) error
@@ -71,7 +75,7 @@ func (s *Storage) AddEvent(ctx context.Context, event *storage.Event) (int, erro
 	return id, nil
 }
 
-func (s *Storage) UpdateEvent(ctx context.Context, updated *storage.Event) (int, error) {
+func (s *Storage) UpdateEvent(ctx context.Context, updated *storage.Event) error {
 	var id int
 	args := []interface{}{}
 	argsCount := 0
@@ -98,10 +102,10 @@ func (s *Storage) UpdateEvent(ctx context.Context, updated *storage.Event) (int,
 
 	err := s.db.QueryRow(ctx, query, args...).Scan(&id)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
-	return id, nil
+	return nil
 }
 
 func (s *Storage) DeleteEvent(ctx context.Context, id int, userID int) error {
@@ -128,8 +132,8 @@ func (s *Storage) ListEvents(
 		ctx,
 		"SELECT id, title, date, duration::text, user_id FROM events WHERE user_id = $1 AND date >= $2 AND date <= $3",
 		userID,
-		dateFrom.Format("2006-01-02 15:04:05"),
-		dateTo.Format("2006-01-02 15:04:05"),
+		dateFrom.Format(time.RFC3339),
+		dateTo.Format(time.RFC3339),
 	)
 	if err != nil {
 		return nil, err
@@ -150,23 +154,25 @@ func (s *Storage) ListEvents(
 	return events, nil
 }
 
-func (s *Storage) CheckEventOverlaps(ctx context.Context, userID int, date time.Time, duration string) (bool, error) {
+func (s *Storage) CheckEventOverlaps(ctx context.Context, userID int, date time.Time, duration string) error {
 	durationParsed, err := utils.ParseDuration(duration)
 	if err != nil {
-		return false, err
+		return err
 	}
 	endTime := date.Add(durationParsed)
-	fmt.Println(date)
-	fmt.Println(endTime)
-	var count int
+
+	var exists bool
 	err = s.db.QueryRow(
 		ctx,
-		"SELECT COUNT(*) FROM events WHERE ((date <= $1 AND $1 < (date + duration)) OR ($2 <= date AND date < $2)) AND user_id = $3",
+		"SELECT EXISTS (SELECT 1 FROM events WHERE ((date <= $1 AND $1 < (date + duration)) OR ($2 <= date AND date < $2)) AND user_id = $3)",
 		date, endTime, userID,
-	).Scan(&count)
-
+	).Scan(&exists)
 	if err != nil {
-		return false, err
+		return err
 	}
-	return count > 0, nil
+
+	if exists {
+		return ErrDateBusy
+	}
+	return nil
 }

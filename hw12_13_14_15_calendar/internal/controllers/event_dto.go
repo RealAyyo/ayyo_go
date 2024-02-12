@@ -1,5 +1,7 @@
 package controllers
 
+import "github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/storage"
+
 type CreateEventDto struct {
 	Title    string `json:"title" validate:"required"`
 	Date     int64  `json:"date" validate:"required"`
@@ -28,4 +30,7 @@ type GetEventsDto struct {
 
 type IdResponseDto struct {
 	ID int `json:"id" validate:"required"`
+}
+type EventResponseDto struct {
+	Event storage.Event `json:"event"`
 }

@@ -96,14 +96,13 @@ func TestStorage(t *testing.T) {
 			UserID: 2,
 			Title:  newTitle,
 		}
-		id, err := storageService.UpdateEvent(ctx, updated)
+		err := storageService.UpdateEvent(ctx, updated)
 		require.NoError(t, err)
 
 		listEvents, err := storageService.ListEvents(ctx, 2, time.Now().Add(-time.Minute), time.Now().AddDate(0, 0, 1))
 		require.NoError(t, err)
 
 		require.Equal(t, listEvents[0].Title, newTitle)
-		require.Equal(t, id, updated.ID)
 	})
 
 	t.Run("Delete Event", func(t *testing.T) {

@@ -24,15 +24,11 @@ type ErrorResponse struct {
 	Err     int    `json:"error"`
 }
 
-func sendErrorResponse(err error, w http.ResponseWriter) error {
+func sendErrorResponse(err error, w http.ResponseWriter) {
 	resp := ErrorResponse{
 		Message: err.Error(),
 		Err:     ErrHas,
 	}
 	w.WriteHeader(http.StatusBadRequest)
-	err = json.NewEncoder(w).Encode(resp)
-	if err != nil {
-		return err
-	}
-	return nil
+	_ = json.NewEncoder(w).Encode(resp)
 }

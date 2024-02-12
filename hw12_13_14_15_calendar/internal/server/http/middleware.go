@@ -29,7 +29,7 @@ func loggingMiddleware(next http.Handler) http.Handler {
 		log.Printf(
 			"%v [%v] %v %v %v %v %v %v",
 			ip,
-			time.Now().Format("02/Jan/2006:15:04:05 -0700"),
+			time.Now().Format(time.RFC822),
 			r.Method,
 			r.URL.Path,
 			r.Proto,

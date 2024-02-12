@@ -23,9 +23,9 @@ type ServerAPI struct {
 }
 
 type Application interface {
-	UpdateEvent(ctx context.Context, event *storage.Event) (int, error)
+	UpdateEvent(ctx context.Context, event *storage.Event) error
 	DeleteEvent(ctx context.Context, eventID int, userID int) error
-	CreateEvent(ctx context.Context, event *storage.Event) (int, error)
+	CreateEvent(ctx context.Context, event *storage.Event) (*storage.Event, error)
 	GetEventsByRange(ctx context.Context, userID int, dateFrom int64, dateTo int64) ([]storage.Event, error)
 }
 
@@ -50,23 +50,23 @@ func (s *ServerAPI) CreateEvent(ctx context.Context, req *calendarV1.CreateEvent
 		UserID:   int(req.GetUserID()),
 	}
 
-	eventID, err := s.app.CreateEvent(ctx, event)
+	newEvent, err := s.app.CreateEvent(ctx, event)
 	if err != nil {
 		return nil, err
 	}
 
 	return &calendarV1.EventResponse{
 		Event: &calendarV1.Event{
-			ID:       int32(eventID),
-			Title:    event.Title,
-			Date:     timestamppb.New(event.Date),
-			Duration: event.Duration,
-			UserID:   int32(event.UserID),
+			ID:       int32(newEvent.ID),
+			Title:    newEvent.Title,
+			Date:     timestamppb.New(newEvent.Date),
+			Duration: newEvent.Duration,
+			UserID:   int32(newEvent.UserID),
 		},
 	}, nil
 }
 
-func (s *ServerAPI) UpdateEvent(ctx context.Context, req *calendarV1.UpdateEventRequest) (*calendarV1.IdEventResponse, error) {
+func (s *ServerAPI) UpdateEvent(ctx context.Context, req *calendarV1.UpdateEventRequest) (*calendarV1.SuccessResponse, error) {
 	event := &storage.Event{
 		ID:       int(req.GetID()),
 		Title:    req.GetTitle(),
@@ -75,12 +75,12 @@ func (s *ServerAPI) UpdateEvent(ctx context.Context, req *calendarV1.UpdateEvent
 		UserID:   int(req.GetUserID()),
 	}
 
-	id, err := s.app.UpdateEvent(ctx, event)
+	err := s.app.UpdateEvent(ctx, event)
 	if err != nil {
 		return nil, err
 	}
 
-	return &calendarV1.IdEventResponse{ID: int32(id)}, nil
+	return &calendarV1.SuccessResponse{Message: "Event updated successfully"}, nil
 }
 
 func (s *ServerAPI) DeleteEvent(ctx context.Context, req *calendarV1.DeleteEventRequest) (*calendarV1.IdEventResponse, error) {

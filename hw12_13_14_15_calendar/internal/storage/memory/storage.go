@@ -11,7 +11,10 @@ import (
 	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/pkg/utils"
 )
 
-var ErrEventNotFound = errors.New("event for update not found")
+var (
+	ErrEventNotFound = errors.New("event not found")
+	ErrDateBusy      = errors.New("date is busy")
+)
 
 type EventsMap map[int]map[int]*storage.Event
 
@@ -53,13 +56,13 @@ func (s *Storage) AddEvent(_ context.Context, event *storage.Event) (int, error)
 	return id, nil
 }
 
-func (s *Storage) UpdateEvent(_ context.Context, updated *storage.Event) (int, error) {
+func (s *Storage) UpdateEvent(_ context.Context, updated *storage.Event) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	findEvent, ok := s.events[updated.UserID][updated.ID]
 	if !ok {
-		return 0, ErrEventNotFound
+		return ErrEventNotFound
 	}
 
 	if updated.Title != "" {
@@ -75,7 +78,7 @@ func (s *Storage) UpdateEvent(_ context.Context, updated *storage.Event) (int, e
 	}
 
 	s.events[updated.UserID][updated.ID] = findEvent
-	return updated.ID, nil
+	return nil
 }
 
 func (s *Storage) DeleteEvent(_ context.Context, id int, userID int) error {
@@ -111,10 +114,10 @@ func (s *Storage) ListEvents(
 	return results, nil
 }
 
-func (s *Storage) CheckEventOverlaps(ctx context.Context, userID int, date time.Time, duration string) (bool, error) {
+func (s *Storage) CheckEventOverlaps(_ context.Context, userID int, date time.Time, duration string) error {
 	durationParsed, err := utils.ParseDuration(duration)
 	if err != nil {
-		return false, err
+		return err
 	}
 	endTime := date.Add(durationParsed)
 
@@ -125,11 +128,11 @@ func (s *Storage) CheckEventOverlaps(ctx context.Context, userID int, date time.
 		eventEndTime := event.Date.Add(durationParsed)
 		if (event.Date.Before(endTime) && endTime.Before(eventEndTime)) ||
 			(date.Before(eventEndTime) && eventEndTime.Before(endTime)) {
-			return true, nil
+			return nil
 		}
 	}
 
-	return false, nil
+	return ErrDateBusy
 }
 
 func New() (*Storage, error) {

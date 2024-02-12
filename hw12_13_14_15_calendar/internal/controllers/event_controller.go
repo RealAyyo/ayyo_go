@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/storage"
+	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/validators"
 )
 
 type EventController struct {
-	app       Application
-	validator Validator
-	logger    Logger
+	app    Application
+	logger Logger
 }
 
 type Logger interface {
@@ -23,22 +23,17 @@ type Logger interface {
 	Warn(msg string, attrs ...any)
 }
 
-type Validator interface {
-	Validate(method string, r *http.Request, data interface{}) error
-}
-
 type Application interface {
-	UpdateEvent(ctx context.Context, event *storage.Event) (int, error)
+	UpdateEvent(ctx context.Context, event *storage.Event) error
 	DeleteEvent(ctx context.Context, eventID int, userID int) error
-	CreateEvent(ctx context.Context, event *storage.Event) (int, error)
+	CreateEvent(ctx context.Context, event *storage.Event) (*storage.Event, error)
 	GetEventsByRange(ctx context.Context, userID int, dateFrom int64, dateTo int64) ([]storage.Event, error)
 }
 
-func NewEventController(app Application, validator Validator, logger Logger) *EventController {
+func NewEventController(app Application, logger Logger) *EventController {
 	return &EventController{
-		app:       app,
-		validator: validator,
-		logger:    logger,
+		app:    app,
+		logger: logger,
 	}
 }
 
@@ -47,10 +42,10 @@ func (e *EventController) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	var dto CreateEventDto
-	err := e.validator.Validate("POST", r, &dto)
-	err = sendErrorResponse(err, w)
+	err := validators.Validate("POST", r, &dto)
 	if err != nil {
-		e.logger.Error(ErrEncodeJson.Error(), ErrEncodeJson)
+		e.logger.Error(err.Error())
+		sendErrorResponse(err, w)
 		return
 	}
 
@@ -63,17 +58,17 @@ func (e *EventController) CreateEvent(w http.ResponseWriter, r *http.Request) {
 		UserID:   dto.UserID,
 	}
 
-	id, err := e.app.CreateEvent(ctx, event)
-	err = sendErrorResponse(err, w)
+	newEvent, err := e.app.CreateEvent(ctx, event)
 	if err != nil {
-		e.logger.Error(ErrEncodeJson.Error(), ErrEncodeJson)
+		e.logger.Error(err.Error())
+		sendErrorResponse(err, w)
 		return
 	}
 
 	resp := SuccessResponse{
 		Message: "Event created successfully",
-		Data: &IdResponseDto{
-			ID: id,
+		Data: &EventResponseDto{
+			Event: *newEvent,
 		},
 		Err: ErrNo,
 	}
@@ -91,10 +86,10 @@ func (e *EventController) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	var dto UpdateEventDto
-	err := e.validator.Validate("PATCH", r, &dto)
-	err = sendErrorResponse(err, w)
+	err := validators.Validate("PATCH", r, &dto)
 	if err != nil {
-		e.logger.Error(ErrEncodeJson.Error(), ErrEncodeJson)
+		e.logger.Error(err.Error())
+		sendErrorResponse(err, w)
 		return
 	}
 
@@ -108,19 +103,16 @@ func (e *EventController) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 		ID:       dto.ID,
 	}
 
-	id, err := e.app.UpdateEvent(ctx, event)
-	err = sendErrorResponse(err, w)
+	err = e.app.UpdateEvent(ctx, event)
 	if err != nil {
-		e.logger.Error(ErrEncodeJson.Error(), ErrEncodeJson)
+		e.logger.Error(err.Error())
+		sendErrorResponse(err, w)
 		return
 	}
 
 	resp := SuccessResponse{
 		Message: "Event updated successfully",
-		Data: &IdResponseDto{
-			ID: id,
-		},
-		Err: ErrNo,
+		Err:     ErrNo,
 	}
 	w.WriteHeader(http.StatusCreated)
 	err = json.NewEncoder(w).Encode(resp)
@@ -135,17 +127,17 @@ func (e *EventController) DeleteEvent(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	var dto DeleteEventDto
-	err := e.validator.Validate("POST", r, &dto)
-	err = sendErrorResponse(err, w)
+	err := validators.Validate("POST", r, &dto)
 	if err != nil {
-		e.logger.Error(ErrEncodeJson.Error(), ErrEncodeJson)
+		e.logger.Error(err.Error())
+		sendErrorResponse(err, w)
 		return
 	}
 
 	err = e.app.DeleteEvent(ctx, dto.ID, dto.UserID)
-	err = sendErrorResponse(err, w)
 	if err != nil {
-		e.logger.Error(ErrEncodeJson.Error(), ErrEncodeJson)
+		e.logger.Error(err.Error())
+		sendErrorResponse(err, w)
 		return
 	}
 
@@ -169,38 +161,38 @@ func (e *EventController) GetEventsByRange(w http.ResponseWriter, r *http.Reques
 	defer cancel()
 
 	var dto GetEventsDto
-	err := e.validator.Validate("GET", r, &dto)
-	err = sendErrorResponse(err, w)
+	err := validators.Validate("GET", r, &dto)
 	if err != nil {
-		e.logger.Error(ErrEncodeJson.Error(), ErrEncodeJson)
+		e.logger.Error(err.Error())
+		sendErrorResponse(err, w)
 		return
 	}
 
 	parsedUserID, err := strconv.ParseInt(dto.UserID, 10, 64)
-	err = sendErrorResponse(err, w)
 	if err != nil {
-		e.logger.Error(ErrEncodeJson.Error(), ErrEncodeJson)
+		e.logger.Error(err.Error())
+		sendErrorResponse(err, w)
 		return
 	}
 
 	parsedDataFrom, err := strconv.ParseInt(dto.DateFrom, 10, 64)
-	err = sendErrorResponse(err, w)
 	if err != nil {
-		e.logger.Error(ErrEncodeJson.Error(), ErrEncodeJson)
+		e.logger.Error(err.Error())
+		sendErrorResponse(err, w)
 		return
 	}
 
 	parsedDataTo, err := strconv.ParseInt(dto.DateTo, 10, 64)
-	err = sendErrorResponse(err, w)
 	if err != nil {
-		e.logger.Error(ErrEncodeJson.Error(), ErrEncodeJson)
+		e.logger.Error(err.Error())
+		sendErrorResponse(err, w)
 		return
 	}
 
 	events, err := e.app.GetEventsByRange(ctx, int(parsedUserID), parsedDataFrom, parsedDataTo)
-	err = sendErrorResponse(err, w)
 	if err != nil {
-		e.logger.Error(ErrEncodeJson.Error(), ErrEncodeJson)
+		e.logger.Error(err.Error())
+		sendErrorResponse(err, w)
 		return
 	}
 
