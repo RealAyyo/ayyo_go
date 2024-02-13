@@ -3,13 +3,12 @@ package internalhttp
 import (
 	"context"
 	"errors"
-	"log"
 	"net"
 	"net/http"
 	"time"
 
 	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/config"
-	storage "github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/storage"
+	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/controllers"
 )
 
 const (
@@ -18,31 +17,18 @@ const (
 
 type Server struct {
 	httpServer *http.Server
-	logger     Logger
-	app        Application
 }
 
-type Logger interface {
-	Info(msg string, attrs ...any)
-	Error(msg string, attrs ...any)
-	Debug(msg string, attrs ...any)
-	Warn(msg string, attrs ...any)
-}
-
-type Application interface {
-	CreateEvent(ctx context.Context, event *storage.Event) error
-	GetEventsForRange(ctx context.Context, userID int, dateFrom time.Time, dateRange int) ([]storage.Event, error)
-}
-
-func NewServer(logger Logger, app Application, config config.HTTPConf) *Server {
+func NewServer(eventController *controllers.EventController, config config.HTTPConf) *Server {
 	addr := net.JoinHostPort(config.Host, config.Port)
 	httpServer := &http.Server{Addr: addr, ReadHeaderTimeout: Timeout * time.Second}
 
-	http.Handle("/", loggingMiddleware(http.HandlerFunc(helloHandler)))
+	http.Handle("/", loggingMiddleware(http.HandlerFunc(eventController.GetEventsByRange)))
+	http.Handle("/create", loggingMiddleware(http.HandlerFunc(eventController.CreateEvent)))
+	http.Handle("/update", loggingMiddleware(http.HandlerFunc(eventController.UpdateEvent)))
+	http.Handle("/delete", loggingMiddleware(http.HandlerFunc(eventController.DeleteEvent)))
 
 	return &Server{
-		logger:     logger,
-		app:        app,
 		httpServer: httpServer,
 	}
 }
@@ -59,21 +45,6 @@ func (s *Server) Start(ctx context.Context) error {
 func (s *Server) Stop(ctx context.Context) error {
 	err := s.httpServer.Shutdown(ctx)
 	return err
-}
-
-func helloHandler(w http.ResponseWriter, r *http.Request) {
-	ip := ReadUserIP(r)
-	log.Printf(
-		"%v [%v] %v %v %v %v %v %v",
-		ip,
-		time.Now().Format("02/Jan/2006:15:04:05 -0700"),
-		r.Method,
-		r.URL.Path,
-		r.Proto,
-		200,
-		100,
-		r.UserAgent(),
-	)
 }
 
 func ReadUserIP(r *http.Request) string {

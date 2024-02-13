@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/app"
-	storage "github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/storage"
+	"github.com/RealAyyo/ayyo_go/hw12_13_14_15_calendar/internal/storage"
 	"github.com/stretchr/testify/require"
 )
 
@@ -75,8 +75,7 @@ func TestStorage(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			err := storageService.AddEvent(ctx, testCase.event)
-
+			_, err := storageService.AddEvent(ctx, testCase.event)
 			if testCase.errRequired != nil {
 				require.ErrorIs(t, err, testCase.errRequired)
 			}
@@ -130,7 +129,8 @@ func TestStorage(t *testing.T) {
 					Duration: "1:00:00",
 					Date:     time.Now(),
 				}
-				err := storageService.AddEvent(ctx, event)
+
+				_, err := storageService.AddEvent(ctx, event)
 				require.NoError(t, err)
 			}(i)
 		}

@@ -22,6 +22,7 @@ type Config struct {
 	Storage Storage    `yaml:"storage"`
 	DB      DBConf     `yaml:"db"`
 	HTTP    HTTPConf   `yaml:"http"`
+	GRPC    GRPCConf   `yaml:"grpc"`
 	Env     string     `yaml:"env"  env-default:"local"`
 }
 
@@ -36,6 +37,10 @@ type DBConf struct {
 type HTTPConf struct {
 	Host string `yaml:"host" env-default:"0.0.0.0"`
 	Port string `yaml:"port" env-default:"8888"`
+}
+
+type GRPCConf struct {
+	Port string `yaml:"port" env-default:"50051"`
 }
 
 type Storage struct {
