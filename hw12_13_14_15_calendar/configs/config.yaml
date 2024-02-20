@@ -2,13 +2,22 @@ env: "local"
 logger:
   level: "INFO"
 storage:
-  type: "MEMORY" # MEMORY / SQL
+  type: "SQL" # MEMORY / SQL
 db:
   host: "localhost"
   port: "5432"
   database: "calendar"
   username: "postgres"
   password: "159753"
+rabbit:
+  user: "user"
+  password: "password"
+  port: "5672"
+  host: "localhost"
+scheduler:
+  interval: "1s"
 http:
   host: "0.0.0.0"
   port: "8080"
+grpc:
+  port: "50051"

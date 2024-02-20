@@ -1,0 +1,68 @@
+syntax = "proto3";
+import "google/protobuf/timestamp.proto";
+
+package calendar;
+option go_package = "RealAyyo.hw12_13_14_15_calendar;calendarV1";
+
+service Calendar {
+  rpc CreateEvent(CreateEventRequest) returns (EventResponse) {}
+  rpc UpdateEvent(UpdateEventRequest) returns (SuccessResponse) {}
+  rpc DeleteEvent(DeleteEventRequest) returns (IdEventResponse) {}
+  rpc ListEvents(ListEventsRequest) returns (ListEventsResponse) {}
+}
+
+message Event {
+  int32 ID = 1;
+  string Title = 2;
+  google.protobuf.Timestamp  Date = 3;
+  string Duration = 4;
+  int32 UserID = 5;
+  string Description = 6;
+  string NotificationTime = 7;
+}
+
+message CreateEventRequest {
+  string Title = 1;
+  google.protobuf.Timestamp Date = 2;
+  string Duration = 3;
+  int32 UserID = 4;
+  string Description = 5;
+  string NotificationTime = 6;
+}
+
+message UpdateEventRequest {
+  int32 ID = 1;
+  string Title = 2;
+  google.protobuf.Timestamp Date = 3;
+  string Duration = 4;
+  int32 UserID = 5;
+  string Description = 6;
+  string NotificationTime = 7;
+}
+
+message DeleteEventRequest {
+  int32 ID = 1;
+  int32 UserID = 2;
+}
+
+message EventResponse {
+  Event event = 1;
+}
+
+message ListEventsRequest {
+  int32 UserID = 1;
+  int64 DateFrom = 2;
+  int64 DateTo = 3;
+}
+
+message ListEventsResponse {
+  repeated Event events = 1;
+}
+
+message IdEventResponse {
+  int32 ID = 1;
+}
+
+message SuccessResponse {
+  string message = 1;
+}

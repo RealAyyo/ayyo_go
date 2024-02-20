@@ -18,11 +18,18 @@ var (
 )
 
 type Config struct {
-	Logger  LoggerConf `yaml:"logger"`
-	Storage Storage    `yaml:"storage"`
-	DB      DBConf     `yaml:"db"`
-	HTTP    HTTPConf   `yaml:"http"`
-	Env     string     `yaml:"env"  env-default:"local"`
+	Logger    LoggerConf    `yaml:"logger"`
+	Storage   Storage       `yaml:"storage"`
+	DB        DBConf        `yaml:"db"`
+	HTTP      HTTPConf      `yaml:"http"`
+	GRPC      GRPCConf      `yaml:"grpc"`
+	RabbitMQ  RabbitMQConf  `yaml:"rabbit"`
+	Scheduler SchedulerConf `yaml:"scheduler"`
+	Env       string        `yaml:"env"  env-default:"local"`
+}
+
+type SchedulerConf struct {
+	Interval string `yaml:"interval" env-default:"5m"`
 }
 
 type DBConf struct {
@@ -36,6 +43,17 @@ type DBConf struct {
 type HTTPConf struct {
 	Host string `yaml:"host" env-default:"0.0.0.0"`
 	Port string `yaml:"port" env-default:"8888"`
+}
+
+type RabbitMQConf struct {
+	User     string `yaml:"user" env-required:"true"`
+	Host     string `yaml:"host" env-default:"localhost"`
+	Port     string `yaml:"port" env-default:"5672"`
+	Password string `yaml:"password" env-required:"true"`
+}
+
+type GRPCConf struct {
+	Port string `yaml:"port" env-default:"50051"`
 }
 
 type Storage struct {
