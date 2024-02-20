@@ -77,6 +77,14 @@ func (s *Storage) UpdateEvent(_ context.Context, updated *storage.Event) error {
 		findEvent.Date = updated.Date
 	}
 
+	if updated.Description != "" {
+		findEvent.Description = updated.Description
+	}
+
+	if updated.NotificationTime != "" {
+		findEvent.NotificationTime = updated.NotificationTime
+	}
+
 	s.events[updated.UserID][updated.ID] = findEvent
 	return nil
 }
@@ -133,6 +141,44 @@ func (s *Storage) CheckEventOverlaps(_ context.Context, userID int, date time.Ti
 	}
 
 	return ErrDateBusy
+}
+
+func (s *Storage) GetEventsToNotify(_ context.Context) ([]storage.Event, error) {
+	var eventsToNotify []storage.Event
+
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	for _, userEvents := range s.events {
+		for _, event := range userEvents {
+			if event.NotificationTime != "" {
+				notificationTime, err := time.ParseDuration(event.NotificationTime)
+				if err != nil {
+					return nil, err
+				}
+				if event.Date.Add(-notificationTime).Before(time.Now()) {
+					eventsToNotify = append(eventsToNotify, *event)
+				}
+			}
+		}
+	}
+
+	return eventsToNotify, nil
+}
+
+func (s *Storage) EventsCleanUp(_ context.Context) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for userID, events := range s.events {
+		for id, event := range events {
+			if event.Date.Before(time.Now().AddDate(-1, 0, 0)) {
+				delete(s.events[userID], id)
+			}
+		}
+	}
+
+	return nil
 }
 
 func New() (*Storage, error) {

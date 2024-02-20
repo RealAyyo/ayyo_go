@@ -52,10 +52,12 @@ func (e *EventController) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	date := time.Unix(dto.Date, 0)
 
 	event := &storage.Event{
-		Title:    dto.Title,
-		Date:     date,
-		Duration: dto.Duration,
-		UserID:   dto.UserID,
+		Title:            dto.Title,
+		Date:             date,
+		Duration:         dto.Duration,
+		UserID:           dto.UserID,
+		Description:      dto.Description,
+		NotificationTime: dto.NotificationTime,
 	}
 
 	newEvent, err := e.app.CreateEvent(ctx, event)
@@ -96,11 +98,13 @@ func (e *EventController) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 	date := time.Unix(dto.Date, 0)
 
 	event := &storage.Event{
-		Title:    dto.Title,
-		Date:     date,
-		Duration: dto.Duration,
-		UserID:   dto.UserID,
-		ID:       dto.ID,
+		Title:            dto.Title,
+		Date:             date,
+		Duration:         dto.Duration,
+		UserID:           dto.UserID,
+		ID:               dto.ID,
+		Description:      dto.Description,
+		NotificationTime: dto.NotificationTime,
 	}
 
 	err = e.app.UpdateEvent(ctx, event)
@@ -201,6 +205,7 @@ func (e *EventController) GetEventsByRange(w http.ResponseWriter, r *http.Reques
 		Data:    events,
 		Err:     ErrNo,
 	}
+
 	w.WriteHeader(http.StatusCreated)
 	err = json.NewEncoder(w).Encode(resp)
 	if err != nil {

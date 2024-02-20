@@ -2,6 +2,7 @@ package sqlstorage
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"time"
@@ -63,10 +64,16 @@ func (s *Storage) Close(ctx context.Context) error {
 
 func (s *Storage) AddEvent(ctx context.Context, event *storage.Event) (int, error) {
 	var id int
+
+	var notificationTime *string
+	if event.NotificationTime != "" {
+		notificationTime = &event.NotificationTime
+	}
+
 	err := s.db.QueryRow(
 		ctx,
-		"INSERT INTO events (title, date, duration, user_id) VALUES ($1, $2, $3, $4) RETURNING id",
-		event.Title, event.Date, event.Duration, event.UserID,
+		"INSERT INTO events (title, date, duration, user_id, description, notification_time) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
+		event.Title, event.Date, event.Duration, event.UserID, event.Description, notificationTime,
 	).Scan(&id)
 	if err != nil {
 		return 0, err
@@ -94,6 +101,16 @@ func (s *Storage) UpdateEvent(ctx context.Context, updated *storage.Event) error
 	if updated.Duration != "" {
 		argsCount++
 		query += fmt.Sprintf(" duration = $%d,", argsCount)
+		args = append(args, updated.Duration)
+	}
+	if updated.Description != "" {
+		argsCount++
+		query += fmt.Sprintf(" description = $%d,", argsCount)
+		args = append(args, updated.Duration)
+	}
+	if updated.NotificationTime != "" {
+		argsCount++
+		query += fmt.Sprintf(" notification_time = $%d,", argsCount)
 		args = append(args, updated.Duration)
 	}
 
@@ -130,7 +147,7 @@ func (s *Storage) ListEvents(
 
 	rows, err := s.db.Query(
 		ctx,
-		"SELECT id, title, date, duration::text, user_id FROM events WHERE user_id = $1 AND date >= $2 AND date <= $3",
+		"SELECT id, title, date, duration::text, user_id, description, notification_time::text FROM events WHERE user_id = $1 AND date >= $2 AND date <= $3",
 		userID,
 		dateFrom.Format(time.RFC3339),
 		dateTo.Format(time.RFC3339),
@@ -142,10 +159,62 @@ func (s *Storage) ListEvents(
 	defer rows.Close()
 	for rows.Next() {
 		var event storage.Event
+		var description sql.NullString
+		var notificationTime sql.NullString
 
-		err = rows.Scan(&event.ID, &event.Title, &event.Date, &event.Duration, &event.UserID)
+		err = rows.Scan(&event.ID, &event.Title, &event.Date, &event.Duration, &event.UserID, &description, &notificationTime)
 		if err != nil {
 			return nil, err
+		}
+
+		if description.Valid {
+			event.Description = description.String
+		}
+		if notificationTime.Valid {
+			event.NotificationTime = notificationTime.String
+		}
+
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (s *Storage) EventsCleanUp(ctx context.Context) error {
+	yearAgo := time.Now().AddDate(-1, 0, 0)
+	_, err := s.db.Exec(
+		ctx,
+		"DELETE FROM events WHERE date < $1",
+		yearAgo,
+	)
+	return err
+}
+
+func (s *Storage) GetEventsToNotify(ctx context.Context) ([]storage.Event, error) {
+	var events []storage.Event
+
+	rows, err := s.db.Query(
+		ctx,
+		`SELECT id, title, date, duration::text, user_id, description, notification_time::text 
+   FROM events 
+   WHERE date - COALESCE(notification_time::interval, '0s'::interval) <= NOW()`,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		var event storage.Event
+		var description sql.NullString
+
+		err = rows.Scan(&event.ID, &event.Title, &event.Date, &event.Duration, &event.UserID, &description, &event.NotificationTime)
+		if err != nil {
+			return nil, err
+		}
+
+		if description.Valid {
+			event.Description = description.String
 		}
 
 		events = append(events, event)

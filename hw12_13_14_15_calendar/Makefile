@@ -1,13 +1,21 @@
 include .env
 
-BIN := "./bin/calendar"
+BIN := "./bin"
 DOCKER_IMG="calendar:develop"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
 
-build:
-	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
+build: build-calendar build-calendar_scheduler build-calendar_sender
+
+build-calendar:
+	go build -v -o $(BIN)/calendar -ldflags "$(LDFLAGS)" ./cmd/calendar
+
+build-calendar_scheduler:
+	go build -v -o $(BIN)/calendar_scheduler -ldflags "$(LDFLAGS)" ./cmd/calendar_scheduler
+
+build-calendar_sender:
+	go build -v -o $(BIN)/calendar_sender -ldflags "$(LDFLAGS)" ./cmd/calendar_sender
 
 run: build
 	$(BIN) -config ./configs/config.yaml

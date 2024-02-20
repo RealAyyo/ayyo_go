@@ -50,10 +50,12 @@ func NewServer(logger Logger, app Application, config config.GRPCConf) *ServerAP
 
 func (s *ServerAPI) CreateEvent(ctx context.Context, req *calendarV1.CreateEventRequest) (*calendarV1.EventResponse, error) {
 	event := &storage.Event{
-		Title:    req.GetTitle(),
-		Date:     req.GetDate().AsTime(),
-		Duration: req.GetDuration(),
-		UserID:   int(req.GetUserID()),
+		Title:            req.GetTitle(),
+		Date:             req.GetDate().AsTime(),
+		Duration:         req.GetDuration(),
+		UserID:           int(req.GetUserID()),
+		Description:      req.GetDescription(),
+		NotificationTime: req.GetNotificationTime(),
 	}
 
 	newEvent, err := s.app.CreateEvent(ctx, event)
@@ -63,22 +65,26 @@ func (s *ServerAPI) CreateEvent(ctx context.Context, req *calendarV1.CreateEvent
 
 	return &calendarV1.EventResponse{
 		Event: &calendarV1.Event{
-			ID:       int32(newEvent.ID),
-			Title:    newEvent.Title,
-			Date:     timestamppb.New(newEvent.Date),
-			Duration: newEvent.Duration,
-			UserID:   int32(newEvent.UserID),
+			ID:               int32(newEvent.ID),
+			Title:            newEvent.Title,
+			Date:             timestamppb.New(newEvent.Date),
+			Duration:         newEvent.Duration,
+			UserID:           int32(newEvent.UserID),
+			Description:      newEvent.Description,
+			NotificationTime: newEvent.NotificationTime,
 		},
 	}, nil
 }
 
 func (s *ServerAPI) UpdateEvent(ctx context.Context, req *calendarV1.UpdateEventRequest) (*calendarV1.SuccessResponse, error) {
 	event := &storage.Event{
-		ID:       int(req.GetID()),
-		Title:    req.GetTitle(),
-		Date:     req.GetDate().AsTime(),
-		Duration: req.GetDuration(),
-		UserID:   int(req.GetUserID()),
+		ID:               int(req.GetID()),
+		Title:            req.GetTitle(),
+		Date:             req.GetDate().AsTime(),
+		Duration:         req.GetDuration(),
+		UserID:           int(req.GetUserID()),
+		Description:      req.GetDescription(),
+		NotificationTime: req.GetNotificationTime(),
 	}
 
 	err := s.app.UpdateEvent(ctx, event)
@@ -106,11 +112,13 @@ func (s *ServerAPI) ListEvents(ctx context.Context, req *calendarV1.ListEventsRe
 	eventsTransform := make([]*calendarV1.Event, 0, len(events))
 	for _, event := range events {
 		eventsTransform = append(eventsTransform, &calendarV1.Event{
-			ID:       int32(event.ID),
-			Title:    event.Title,
-			Date:     timestamppb.New(event.Date),
-			Duration: event.Duration,
-			UserID:   int32(event.UserID),
+			ID:               int32(event.ID),
+			Title:            event.Title,
+			Date:             timestamppb.New(event.Date),
+			Duration:         event.Duration,
+			UserID:           int32(event.UserID),
+			NotificationTime: event.NotificationTime,
+			Description:      event.NotificationTime,
 		})
 	}
 	return &calendarV1.ListEventsResponse{Events: eventsTransform}, nil

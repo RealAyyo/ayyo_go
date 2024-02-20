@@ -17,6 +17,8 @@ message Event {
   google.protobuf.Timestamp  Date = 3;
   string Duration = 4;
   int32 UserID = 5;
+  string Description = 6;
+  string NotificationTime = 7;
 }
 
 message CreateEventRequest {
@@ -24,6 +26,8 @@ message CreateEventRequest {
   google.protobuf.Timestamp Date = 2;
   string Duration = 3;
   int32 UserID = 4;
+  string Description = 5;
+  string NotificationTime = 6;
 }
 
 message UpdateEventRequest {
@@ -32,6 +36,8 @@ message UpdateEventRequest {
   google.protobuf.Timestamp Date = 3;
   string Duration = 4;
   int32 UserID = 5;
+  string Description = 6;
+  string NotificationTime = 7;
 }
 
 message DeleteEventRequest {

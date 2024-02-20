@@ -18,12 +18,6 @@ var (
 	ErrTitleRequired    = errors.New("title is required")
 )
 
-const (
-	DAY = iota
-	WEEK
-	MONTH
-)
-
 type App struct {
 	logger  Logger
 	storage StorageService
@@ -40,7 +34,9 @@ type StorageService interface {
 	AddEvent(ctx context.Context, event *storage.Event) (int, error)
 	UpdateEvent(ctx context.Context, updated *storage.Event) error
 	DeleteEvent(ctx context.Context, id int, userID int) error
+	EventsCleanUp(ctx context.Context) error
 	ListEvents(ctx context.Context, userID int, dateFrom time.Time, dateTo time.Time) ([]storage.Event, error)
+	GetEventsToNotify(ctx context.Context) ([]storage.Event, error)
 	CheckEventOverlaps(ctx context.Context, userID int, date time.Time, duration string) error
 }
 
@@ -103,4 +99,23 @@ func (a *App) GetEventsByRange(ctx context.Context, userID int, dateFrom int64, 
 	}
 
 	return listEvents, nil
+}
+
+func (a *App) EventsCleanUp(ctx context.Context) error {
+	return a.storage.EventsCleanUp(ctx)
+}
+
+func (a *App) GetEventsToNotify(ctx context.Context) ([]storage.Event, error) {
+	return a.storage.GetEventsToNotify(ctx)
+}
+
+func (a *App) StartCleanUp() {
+	ticker := time.NewTicker(time.Minute)
+	defer ticker.Stop()
+	for range ticker.C {
+		err := a.EventsCleanUp(context.Background())
+		if err != nil {
+			a.logger.Error("events cleanup error", err)
+		}
+	}
 }
